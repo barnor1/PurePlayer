@@ -41,6 +41,7 @@ app.commandLine.appendSwitch('disable-site-isolation-trials');
 const contextMenu = new Menu()
 const recentSubmenu = new Menu()
 const windowSubmenu = new Menu()
+const playerSubmenu = new Menu()
 app.whenReady().then(() => {
   const mainWin = createWindow()
   mainWin.on('ready-to-show', () => {
@@ -85,6 +86,7 @@ app.whenReady().then(() => {
       mainWin.setAlwaysOnTop(menuItem.checked);
     }
   }));
+  
   globalShortcut.register('Control+Shift+I', () => {
     mainWin.webContents.openDevTools()
   });
@@ -183,6 +185,7 @@ app.whenReady().then(() => {
     label: "Window", type: 'submenu',
     submenu: windowSubmenu
   }));
+
   windowSubmenu.append(new MenuItem({
     label: "Maximize",
     accelerator: process.platform === 'darwin' ? 'Cmd+F' : 'Ctrl+F',
@@ -205,6 +208,22 @@ app.whenReady().then(() => {
         browserWindow.minimize();
     }
   }));
+//--- Custom code ---
+contextMenu.append(new MenuItem({
+  label: "Pause/Play", type: 'submenu',
+  submenu: playerSubmenu
+}));
+
+playerSubmenu.append(new MenuItem({
+  id: "toggle-video", label: 'Toggle Player', visible: true,
+  accelerator: process.platform === 'darwin' ? 'Cmd+Z' : 'Ctrl+Z',
+  click: (menuItem, browserWindow,event) => {
+    console.log('toggling');
+    mainWin.webContents.send('toggle-video')
+  }
+}));
+
+// --- end custom code ---
   contextMenu.append(new MenuItem({
     label: 'Load',
     accelerator: process.platform === 'darwin' ? 'Cmd+L' : 'Ctrl+L',
@@ -294,6 +313,15 @@ app.whenReady().then(() => {
     }
     contextMenu.popup(win)
   })
+  //  --- custom code ---
+
+  ipcMain.on('toggle-video', (event, menuType) => {
+    const video = document.querySelector('video')
+    if (video) {
+      video.paused ? video.play() : video.pause()
+    }
+  })
+  // --- end of custom code ---
   ipcMain.on('save-scene', (event, filePath, stateCopy) => {
     console.log('save', filePath, stateCopy)
     let data = JSON.stringify(stateCopy);

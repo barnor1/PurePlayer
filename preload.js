@@ -352,6 +352,15 @@ ipcRenderer.on('clipboard', (event, msg) => {
   } else
     addMediaWithPath(payload[payload.type], payload.type)
 })
+//  --- custom code ---
+
+ipcRenderer.on('toggle-video', (event, newState) => {
+  const video = document.querySelector('video')
+  if (video) {
+    video.paused ? video.play() : video.pause()
+  }
+})
+// end of custom code ---
 function getCenterOfWindowScaled() {
   const width = window.innerWidth;
   const height = window.innerHeight;

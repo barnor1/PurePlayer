@@ -93,7 +93,7 @@ var player;
 function onYouTubeIframeAPIReady() { } // idk why it breaks without this
 
 function onPlayerReady(event) {
-    event.target.setVolume(0);
+    event.target.setVolume(50);
     event.target.mute();
 
     // lifts youtube video to last element at the root of body 
