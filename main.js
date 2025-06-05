@@ -53,6 +53,40 @@ app.whenReady().then(() => {
     loadMostRecent()
   });
 
+  //  ---- custom code ----
+  function sendControl(action) {
+    if (mainWin && mainWin.webContents) {
+        mainWin.webContents.send('video-control', action);
+    }
+  }
+
+  function setupGlobalShortcuts() {
+    globalShortcut.register('MediaPlayPause', () => sendControl('playPause'));
+    globalShortcut.register('MediaNextTrack', () => sendControl('forward'));
+    globalShortcut.register('MediaPreviousTrack', () => sendControl('rewind'));
+    globalShortcut.register('CommandOrControl+Up', () => sendControl('volumeUp'));
+    globalShortcut.register('CommandOrControl+Down', () => sendControl('volumeDown'));
+  }
+  
+  function setupAppMenu() {
+    const template = [
+        {
+            label: 'Playback',
+            submenu: [
+                { label: 'Play/Pause', accelerator: 'Space', click: () => sendControl('playPause') },
+                { label: 'Rewind 5s', click: () => sendControl('rewind') },
+                { label: 'Forward 5s', click: () => sendControl('forward') },
+                { type: 'separator' },
+                { label: 'Volume Up', click: () => sendControl('volumeUp') },
+                { label: 'Volume Down', click: () => sendControl('volumeDown') },
+            ],
+        },
+    ];
+    const menu = Menu.buildFromTemplate(template);
+    Menu.setApplicationMenu(menu);
+  }
+  //  ---- end custom code ---
+
   contextMenu.append(new MenuItem({
     id: "close-edit-video", label: 'Close Edit Video', visible: false,
     click: (menuItem, browserWindow, event) => {
