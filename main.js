@@ -1,386 +1,417 @@
 const {
-  BrowserWindow,
-  Menu,
-  MenuItem,
-  ipcMain,
-  app,
-  clipboard,
-  screen,
-  globalShortcut,
-  dialog
-} = require('electron')
-const path = require('path')
-const fs = require('fs');
-const Store = require('electron-store');
-
-const store = new Store();
-//store.clear()
-
-//menu.append(new MenuItem({ label: 'Electron', type: 'checkbox', checked: true }))
-
-let width = 400;
-let height = 300;
-
-function createWindow() {
-  const win = new BrowserWindow({
-    backgroundColor: "#202020",
-    width: width,
-    height: height,
-    frame: false,
-    webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
-      nodeIntegration: true,
-    }
-  })
-  win.setAlwaysOnTop(true);
-
-  win.loadFile('index.html')
-  return win;
-}
-app.commandLine.appendSwitch('disable-site-isolation-trials');
-const contextMenu = new Menu()
-const recentSubmenu = new Menu()
-const windowSubmenu = new Menu()
-app.whenReady().then(() => {
-  const mainWin = createWindow()
-  mainWin.on('ready-to-show', () => {
-    console.log('Window ready to be presented');
-    mainWin.show();
-  });
-  mainWin.webContents.on('did-finish-load', () => {
-    console.log('Page fully loaded');
-    //setTimeout(loadMostRecent, 1000)
-    loadMostRecent()
-  });
-
-  //  ---- custom code ----
-  function sendControl(action) {
-    if (mainWin && mainWin.webContents) {
-        mainWin.webContents.send('video-control', action);
-    }
-  }
-
-  function setupGlobalShortcuts() {
-    globalShortcut.register('MediaPlayPause', () => sendControl('playPause'));
-    globalShortcut.register('MediaNextTrack', () => sendControl('forward'));
-    globalShortcut.register('MediaPreviousTrack', () => sendControl('rewind'));
-    globalShortcut.register('CommandOrControl+Up', () => sendControl('volumeUp'));
-    globalShortcut.register('CommandOrControl+Down', () => sendControl('volumeDown'));
-  }
+    BrowserWindow,
+    Menu,
+    MenuItem,
+    ipcMain,
+    app,
+    clipboard,
+    screen,
+    globalShortcut,
+    dialog
+  } = require('electron')
+  const path = require('path')
+  const fs = require('fs');
+  const Store = require('electron-store');
   
-  function setupAppMenu() {
-    const template = [
-        {
-            label: 'Playback',
-            submenu: [
-                { label: 'Play/Pause', accelerator: 'Space', click: () => sendControl('playPause') },
-                { label: 'Rewind 5s', click: () => sendControl('rewind') },
-                { label: 'Forward 5s', click: () => sendControl('forward') },
-                { type: 'separator' },
-                { label: 'Volume Up', click: () => sendControl('volumeUp') },
-                { label: 'Volume Down', click: () => sendControl('volumeDown') },
-            ],
-        },
-    ];
-    const menu = Menu.buildFromTemplate(template);
-    Menu.setApplicationMenu(menu);
-  }
-  //  ---- end custom code ---
+  const store = new Store();
+  //store.clear()
+  
+  //menu.append(new MenuItem({ label: 'Electron', type: 'checkbox', checked: true }))
 
-  contextMenu.append(new MenuItem({
-    id: "close-edit-video", label: 'Close Edit Video', visible: false,
-    click: (menuItem, browserWindow, event) => {
-      //mainWin.setAlwaysOnTop(menuItem.checked);
-      mainWin.webContents.send('close-edit-video')
-    }
-  }));
+  let width = 400;
+  let height = 300;
+  
+function createWindow() {
+const win = new BrowserWindow({
+  width: width,
+  height: height,
+  backgroundColor: "#202020",
+  // frame: false,
+  webPreferences: {
+    preload: path.join(__dirname, 'preload.js'),
+    nodeIntegration: true,
+    //contextIsolation: false,
+      },
+    });
+    win.setAlwaysOnTop(true)
 
-  contextMenu.append(new MenuItem({
-    id: "edit-video", label: 'Edit Video', visible: false,
-    click: (menuItem, browserWindow, event) => {
-      //mainWin.setAlwaysOnTop(menuItem.checked);
-      mainWin.webContents.send('edit-video')
-    }
-  }));
-  contextMenu.append(new MenuItem({
-    label: 'Paste',
-    accelerator: process.platform === 'darwin' ? 'Cmd+V' : 'Ctrl+V',
-    click: (menuItem, browserWindow, event) => {
-      console.log('click paste')
+    win.loadFile('index.html');
 
-      handlePaste();
-    }
-  }));
-  contextMenu.append(new MenuItem({ type: 'separator' }))
-
-  contextMenu.append(new MenuItem({
-    label: 'Always on Top', type: 'checkbox', checked: true,
-    click: (menuItem, browserWindow, event) => {
-      mainWin.setAlwaysOnTop(menuItem.checked);
-    }
-  }));
-  globalShortcut.register('Control+Shift+I', () => {
-    mainWin.webContents.openDevTools()
-  });
-  //globalShortcut.register('CommandOrControl+V', handlePaste)
-
-  function handlePaste() {
-    console.log('handlePaste')
-
-    let payload = {}
-    ///strimg = JSON.stringify(img)
-    var formats = clipboard.availableFormats();
-    var rawFilePath = clipboard.read('FileNameW');
-
-    if (rawFilePath) {
-      var filePath = rawFilePath.replace(new RegExp(String.fromCharCode(0), 'g'), '');
-      payload.type = 'filePath'
-      payload.filePath = filePath
-      console.log(filePath)
-
-    } else if (formats.indexOf('image/png') > -1) {
-      img = clipboard.readImage();
-      payload.type = 'dataURL'
-      payload.dataURL = img.toDataURL().replace('png', 'gif')
-    } else if (formats.indexOf('text/plain') > -1) {
-      //potential link
-      var potentialUrl = clipboard.readText()
-      console.log("potentialUrl", potentialUrl)
-      if (validateUrl(potentialUrl)) {
+    // setupGlobalShortcuts();
+    // setupAppMenu();
+    return win;
+}
+  app.commandLine.appendSwitch('disable-site-isolation-trials');
+  const contextMenu = new Menu()
+  const recentSubmenu = new Menu()
+  const windowSubmenu = new Menu()
+  app.whenReady().then(() => {
+    const mainWin = createWindow()
+    mainWin.on('ready-to-show', () => {
+      console.log('Window ready to be presented');
+      mainWin.show();
+    });
+    mainWin.webContents.on('did-finish-load', () => {
+      console.log('Page fully loaded');
+      //setTimeout(loadMostRecent, 1000)
+      loadMostRecent()
+    });
+  
+    contextMenu.append(new MenuItem({
+      id: "close-edit-video", label: 'Close Edit Video', visible: false,
+      click: (menuItem, browserWindow, event) => {
+        //mainWin.setAlwaysOnTop(menuItem.checked);
+        mainWin.webContents.send('close-edit-video')
+      }
+    }));
+  
+    contextMenu.append(new MenuItem({
+      id: "edit-video", label: 'Edit Video', visible: false,
+      click: (menuItem, browserWindow, event) => {
+        //mainWin.setAlwaysOnTop(menuItem.checked);
+        mainWin.webContents.send('edit-video')
+      }
+    }));
+    contextMenu.append(new MenuItem({
+      label: 'Paste',
+      accelerator: process.platform === 'darwin' ? 'Cmd+V' : 'Ctrl+V',
+      click: (menuItem, browserWindow, event) => {
+        console.log('click paste')
+  
+        handlePaste();
+      }
+    }));
+    contextMenu.append(new MenuItem({ type: 'separator' }))
+  
+    contextMenu.append(new MenuItem({
+      label: 'Always on Top', type: 'checkbox', checked: true,
+      click: (menuItem, browserWindow, event) => {
+        mainWin.setAlwaysOnTop(menuItem.checked);
+      }
+    }));
+    globalShortcut.register('Control+Shift+I', () => {
+      mainWin.webContents.openDevTools()
+    });
+    //globalShortcut.register('CommandOrControl+V', handlePaste)
+  
+    function handlePaste() {
+      console.log('handlePaste')
+  
+      let payload = {}
+      ///strimg = JSON.stringify(img)
+      var formats = clipboard.availableFormats();
+      var rawFilePath = clipboard.read('FileNameW');
+  
+      if (rawFilePath) {
+        var filePath = rawFilePath.replace(new RegExp(String.fromCharCode(0), 'g'), '');
         payload.type = 'filePath'
-        payload.filePath = potentialUrl
-      } else {
-        // paste as text element
-        payload.type = 'text'
-        payload.text = clipboard.readText()
+        payload.filePath = filePath
+        console.log(filePath)
+  
+      } else if (formats.indexOf('image/png') > -1) {
+        img = clipboard.readImage();
+        payload.type = 'dataURL'
+        payload.dataURL = img.toDataURL().replace('png', 'gif')
+      } else if (formats.indexOf('text/plain') > -1) {
+        //potential link
+        var potentialUrl = clipboard.readText()
+        console.log("potentialUrl", potentialUrl)
+        if (validateUrl(potentialUrl)) {
+          payload.type = 'filePath'
+          payload.filePath = potentialUrl
+        } else {
+          // paste as text element
+          payload.type = 'text'
+          payload.text = clipboard.readText()
+        }
+      }
+  
+      console.log(formats)
+      //console.log(payload)
+      mainWin.webContents.send('clipboard', JSON.stringify(payload)) // send to web page
+    }
+    function addToRecent(filePath) {
+      var recent = JSON.parse(store.get('recent') || "[]")
+      console.log("addToRecent", store.get('recent'), filePath)
+      let index = recent.indexOf(filePath)
+      let exists = index != -1
+      if (exists) {
+        recent.splice(index, 1)
+      }
+      recent.push(filePath)
+      store.set('recent', JSON.stringify(recent));
+      console.log("addedToRecent", store.get('recent'), filePath)
+      if (!exists) {
+        recentSubmenu.append(new MenuItem({
+          label: filePath,
+          click: (menuItem, browserWindow, event) => {
+            readAndLoadFilePath(menuItem.label)
+          }
+        }))
       }
     }
-
-    console.log(formats)
-    //console.log(payload)
-    mainWin.webContents.send('clipboard', JSON.stringify(payload)) // send to web page
-  }
-  function addToRecent(filePath) {
-    var recent = JSON.parse(store.get('recent') || "[]")
-    console.log("addToRecent", store.get('recent'), filePath)
-    let index = recent.indexOf(filePath)
-    let exists = index != -1
-    if (exists) {
-      recent.splice(index, 1)
+    function populateRecent() {
+      var recent = JSON.parse(store.get('recent') || "[]")
+      console.log("populateRecent", store.get('recent'))
+      for (recentfile of recent) {
+        recentSubmenu.append(new MenuItem({
+          label: recentfile,
+          click: (menuItem, browserWindow, event) => {
+            readAndLoadFilePath(menuItem.label)
+          }
+        }))
+      }
     }
-    recent.push(filePath)
-    store.set('recent', JSON.stringify(recent));
-    console.log("addedToRecent", store.get('recent'), filePath)
-    if (!exists) {
-      recentSubmenu.append(new MenuItem({
-        label: filePath,
-        click: (menuItem, browserWindow, event) => {
-          readAndLoadFilePath(menuItem.label)
-        }
-      }))
+    function loadMostRecent() {
+      var recent = JSON.parse(store.get('recent') || "[]")
+      if (recent.length > 0)
+        readAndLoadFilePath(recent[recent.length - 1])
     }
-  }
-  function populateRecent() {
-    var recent = JSON.parse(store.get('recent') || "[]")
-    console.log("populateRecent", store.get('recent'))
-    for (recentfile of recent) {
-      recentSubmenu.append(new MenuItem({
-        label: recentfile,
-        click: (menuItem, browserWindow, event) => {
-          readAndLoadFilePath(menuItem.label)
-        }
-      }))
-    }
-  }
-  function loadMostRecent() {
-    var recent = JSON.parse(store.get('recent') || "[]")
-    if (recent.length > 0)
-      readAndLoadFilePath(recent[recent.length - 1])
-  }
-
-  contextMenu.append(new MenuItem({ type: 'separator' }))
-
-  function readAndLoadFilePath(filePath) {
-    fs.readFile(filePath, (err, data) => {
-      if (err) throw err;
-      let newState = JSON.parse(data);
-      mainWin.webContents.send('load-scene', newState, filePath)
-    });
-  }
-
-  contextMenu.append(new MenuItem({
-    label: "Recent", type: 'submenu',
-    submenu: recentSubmenu
-  }));
-  populateRecent()
-  contextMenu.append(new MenuItem({
-    label: "Window", type: 'submenu',
-    submenu: windowSubmenu
-  }));
-  windowSubmenu.append(new MenuItem({
-    label: "Maximize",
-    accelerator: process.platform === 'darwin' ? 'Cmd+F' : 'Ctrl+F',
-    ///TODO: add fuctionality maximizing a window
-    click: (menuItem, browserWindow, event) => {
-      console.log("max window");
-      if(!browserWindow.isMaximized())
-        browserWindow.maximize();
-      else
-        browserWindow.unmaximize();
-    }
-  }));
-  windowSubmenu.append(new MenuItem({
-    label: "Minimize",
-    accelerator: process.platform === 'darwin' ? 'Cmd+M' : 'Ctrl+M',
-    ///TODO: add fuctionality for minimizing a window
-    click: (menuItem, browserWindow, event) => {
-      console.log("max window");
-      if(!browserWindow.minimize())
-        browserWindow.minimize();
-    }
-  }));
-  contextMenu.append(new MenuItem({
-    label: 'Load',
-    accelerator: process.platform === 'darwin' ? 'Cmd+L' : 'Ctrl+L',
-    click: (menuItem, browserWindow, event) => {
-      dialog.showOpenDialog({
-        properties: ['openFile'],
-        filters: [
-          { name: 'PurRef Gif Scene', extensions: ['purgif'] }
-        ]
-      }).then(result => {
-        console.log(result.canceled)
-        console.log("result.filePaths", result.filePaths)
-        if (!result.canceled) {
-          readAndLoadFilePath(result.filePaths[0])
-        }
-      }).catch(err => {
-        console.log(err)
-      })
-    }
-  }));
-  contextMenu.append(new MenuItem({
-    label: 'Save',
-    accelerator: process.platform === 'darwin' ? 'Cmd+S' : 'Ctrl+S',
-    click: (menuItem, browserWindow, event) => {
-      dialog.showSaveDialog({
-        defaultPath: 'scene.purgif',
-        filters: [
-          { name: 'PurRef Gif Scene', extensions: ['purgif'] }
-        ]
-      }).then(result => {
-        console.log(result.canceled)
-        console.log(result.filePath)
-        if (!result.canceled) {
-          mainWin.webContents.send('save-scene', result.filePath)
-          addToRecent(result.filePath)
-        }
-      }).catch(err => {
-        console.log(err)
-      })
-    }
-  }));
-  contextMenu.append(new MenuItem({
-    label: 'New Scene',
-    accelerator: process.platform === 'darwin' ? 'Cmd+N' : 'Ctrl+N',
-    click: (menuItem, browserWindow, event) => {
-      mainWin.webContents.send('new-scene');
-    }
-  }));
-  contextMenu.append(new MenuItem({
-    label: 'Close',
-    accelerator: process.platform === 'darwin' ? 'Cmd+W' : 'Ctrl+W',
-    click: (menuItem, browserWindow, event) => {
-      browserWindow.close();
-    }
-  }));
-
-  Menu.setApplicationMenu(contextMenu)
-
-  if (process.argv.indexOf("debug") > -1)
-    mainWin.webContents.openDevTools()
   
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow()
-
+    contextMenu.append(new MenuItem({ type: 'separator' }))
+  
+    function readAndLoadFilePath(filePath) {
+      fs.readFile(filePath, (err, data) => {
+        if (err) throw err;
+        let newState = JSON.parse(data);
+        mainWin.webContents.send('load-scene', newState, filePath)
+      });
     }
-  })
-
-  app.on('browser-window-created', (event, win) => {
-    win.webContents.on('context-menu', (e, params) => {
-      //menu.popup(win, params.x, params.y)
+  
+    contextMenu.append(new MenuItem({
+      label: "Recent", type: 'submenu',
+      submenu: recentSubmenu
+    }));
+    populateRecent()
+    contextMenu.append(new MenuItem({
+      label: "Window", type: 'submenu',
+      submenu: windowSubmenu
+    }));
+    windowSubmenu.append(new MenuItem({
+      label: "Maximize",
+      accelerator: process.platform === 'darwin' ? 'Cmd+F' : 'Ctrl+F',
+      ///TODO: add fuctionality maximizing a window
+      click: (menuItem, browserWindow, event) => {
+        console.log("max window");
+        if(!browserWindow.isMaximized())
+          browserWindow.maximize();
+        else
+          browserWindow.unmaximize();
+      }
+    }));
+    windowSubmenu.append(new MenuItem({
+      label: "Minimize",
+      accelerator: process.platform === 'darwin' ? 'Cmd+M' : 'Ctrl+M',
+      ///TODO: add fuctionality for minimizing a window
+      click: (menuItem, browserWindow, event) => {
+        console.log("max window");
+        if(!browserWindow.minimize())
+          browserWindow.minimize();
+      }
+    }));
+    contextMenu.append(new MenuItem({
+      label: 'Load',
+      accelerator: process.platform === 'darwin' ? 'Cmd+L' : 'Ctrl+L',
+      click: (menuItem, browserWindow, event) => {
+        dialog.showOpenDialog({
+          properties: ['openFile'],
+          filters: [
+            { name: 'PurRef Gif Scene', extensions: ['purgif'] },
+            { name: 'gifs', extensions:['gif']},
+            { name: 'Videos', extensions:['mp4']}
+            
+          ]
+        }).then(result => {
+          console.log(result.canceled)
+          console.log("result.filePaths", result.filePaths)
+          if (!result.canceled) {
+            readAndLoadFilePath(result.filePaths[0])
+          }
+        }).catch(err => {
+          console.log(err)
+        })
+      }
+    }));
+    contextMenu.append(new MenuItem({
+      label: 'Save',
+      accelerator: process.platform === 'darwin' ? 'Cmd+S' : 'Ctrl+S',
+      click: (menuItem, browserWindow, event) => {
+        dialog.showSaveDialog({
+          defaultPath: 'scene.purgif',
+          filters: [
+            { name: 'PurRef Gif Scene', extensions: ['purgif'] }
+          ]
+        }).then(result => {
+          console.log(result.canceled)
+          console.log(result.filePath)
+          if (!result.canceled) {
+            mainWin.webContents.send('save-scene', result.filePath)
+            addToRecent(result.filePath)
+          }
+        }).catch(err => {
+          console.log(err)
+        })
+      }
+    }));
+    contextMenu.append(new MenuItem({
+      label: 'New Scene',
+      accelerator: process.platform === 'darwin' ? 'Cmd+N' : 'Ctrl+N',
+      click: (menuItem, browserWindow, event) => {
+        mainWin.webContents.send('new-scene');
+      }
+    }));
+    contextMenu.append(new MenuItem({
+      label: 'Close',
+      accelerator: process.platform === 'darwin' ? 'Cmd+W' : 'Ctrl+W',
+      click: (menuItem, browserWindow, event) => {
+        browserWindow.close();
+      }
+    }));
+  
+    Menu.setApplicationMenu(contextMenu)
+  
+    if (process.argv.indexOf("debug") > -1)
+      mainWin.webContents.openDevTools()
+    
+    app.on('activate', () => {
+      if (BrowserWindow.getAllWindows().length === 0) {
+        createWindow()
+  
+      }
     })
-  })
-  ipcMain.on('ready', (event, menuType) => {
-    //loadMostRecent()
-    windowIsReady = true;
-  });
-  ipcMain.on('show-context-menu', (event, menuType) => {
-    const win = BrowserWindow.fromWebContents(event.sender)
-    console.log(menuType)
-    contextMenu.getMenuItemById("edit-video").visible = false;
-    contextMenu.getMenuItemById("close-edit-video").visible = false;
-    if (menuType == 'youtube' || menuType == 'video') {
-      contextMenu.getMenuItemById("edit-video").visible = true;
-    } else if (menuType == 'edit-video') {
-      contextMenu.getMenuItemById("close-edit-video").visible = true;
-    }
-    contextMenu.popup(win)
-  })
-  ipcMain.on('save-scene', (event, filePath, stateCopy) => {
-    console.log('save', filePath, stateCopy)
-    let data = JSON.stringify(stateCopy);
-    fs.writeFileSync(filePath, data);
-    //const win = BrowserWindow.fromWebContents(event.sender)
-    //menu.popup(win)
-  })
-  let dragState = {
-    dragging: false
-  }
-  ipcMain.on('handle-paste', (event, w, h) => {
-    handlePaste()
-  })
-  ipcMain.on('loaded-state', (event, filePath) => {
-    addToRecent(filePath)
-  })
-  ipcMain.on('record-window-size', (event, w, h) => {
-    width = mainWin.getSize()[0]
-    height = mainWin.getSize()[1]
-  })
-  ipcMain.on('move-electron-window', (event, x, y, initPos) => {
-    //var display =  screen.getDisplayNearestPoint({x: x, y: y})
-    //var dpiRespected = screen.dipToScreenPoint({x: x, y: y})
-    //mainWin.setPosition(x,y)
-    mainWin.setBounds({
-      width: width,
-      height: height,
-      x: x - initPos.x,
-      y: y - initPos.y
-    });
-    //win.setSize(width, height)
-    //mainWin.setPosition(Math.round(x / 1.25) - Math.round(initPos.x / 1.25), Math.round(y / 1.25) - Math.round(initPos.y / 1.25))
-  })
-  let loopToLoad = function loopToLoad(){
-    if(windowIsReady){
-      console.log("loadMostRecent")
-      //setTimeout(loadMostRecent, 700)
+  
+    app.on('browser-window-created', (event, win) => {
+      win.webContents.on('context-menu', (e, params) => {
+        //menu.popup(win, params.x, params.y)
+      })
+    })
+    ipcMain.on('ready', (event, menuType) => {
       //loadMostRecent()
+      windowIsReady = true;
+    });
+    ipcMain.on('show-context-menu', (event, menuType) => {
+      const win = BrowserWindow.fromWebContents(event.sender)
+      console.log(menuType)
+      contextMenu.getMenuItemById("edit-video").visible = false;
+      contextMenu.getMenuItemById("close-edit-video").visible = false;
+      if (menuType == 'youtube' || menuType == 'video') {
+        contextMenu.getMenuItemById("edit-video").visible = true;
+      } else if (menuType == 'edit-video') {
+        contextMenu.getMenuItemById("close-edit-video").visible = true;
+      }
+      contextMenu.popup(win)
+    })
+    ipcMain.on('save-scene', (event, filePath, stateCopy) => {
+      console.log('save', filePath, stateCopy)
+      let data = JSON.stringify(stateCopy);
+      fs.writeFileSync(filePath, data);
+      //const win = BrowserWindow.fromWebContents(event.sender)
+      //menu.popup(win)
+    })
+    let dragState = {
+      dragging: false
     }
-    else{
-      console.log("not ready")
-      setTimeout(loopToLoad, 100)
+    ipcMain.on('handle-paste', (event, w, h) => {
+      handlePaste()
+    })
+    ipcMain.on('loaded-state', (event, filePath) => {
+      addToRecent(filePath)
+    })
+    ipcMain.on('record-window-size', (event, w, h) => {
+      width = mainWin.getSize()[0]
+      height = mainWin.getSize()[1]
+    })
+    ipcMain.on('move-electron-window', (event, x, y, initPos) => {
+      //var display =  screen.getDisplayNearestPoint({x: x, y: y})
+      //var dpiRespected = screen.dipToScreenPoint({x: x, y: y})
+      //mainWin.setPosition(x,y)
+      mainWin.setBounds({
+        width: width,
+        height: height,
+        x: x - initPos.x,
+        y: y - initPos.y
+      });
+      //win.setSize(width, height)
+      //mainWin.setPosition(Math.round(x / 1.25) - Math.round(initPos.x / 1.25), Math.round(y / 1.25) - Math.round(initPos.y / 1.25))
+    })
+    let loopToLoad = function loopToLoad(){
+      if(windowIsReady){
+        console.log("loadMostRecent")
+        //setTimeout(loadMostRecent, 700)
+        //loadMostRecent()
+      }
+      else{
+        console.log("not ready")
+        setTimeout(loopToLoad, 100)
+      }
+    };
+    loopToLoad();
+  })
+  
+  let windowIsReady = false;
+  app.on('window-all-closed', () => {
+    if (process.platform !== 'darwin') {
+      app.quit()
     }
-  };
-  loopToLoad();
-})
+  });
 
-let windowIsReady = false;
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit()
-  }
-})
+//   app.on('window-all-closed', () => {
+//     if (process.platform !== 'darwin') app.quit();
+// });
+
+app.on('activate', () => {
+    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+});
+
+// function sendControl(action) {
+//     if (win && win.webContents) {
+//         win.webContents.send('video-control', action);
+//     }
+// }
+
+// function setupGlobalShortcuts() {
+//     const shortcuts = [
+//         ['MediaPlayPause', 'playPause'],
+//         ['MediaNextTrack', 'forward'],
+//         ['MediaPreviousTrack', 'rewind'],
+//         ['CommandOrControl+Up', 'volumeUp'],
+//         ['CommandOrControl+Down', 'volumeDown']
+//     ];
+
+//     for (const [shortcut, action] of shortcuts) {
+//         const success = globalShortcut.register(shortcut, () => sendControl(action));
+//         if (!success) {
+//             console.warn(`Global shortcut registration failed: ${shortcut}`);
+//         }
+//     }
+// }
+
+// function setupAppMenu() {
+//     const template = [
+//         {
+//             label: 'Playback',
+//             submenu: [
+//                 { label: 'Play/Pause', accelerator: 'Space', click: () => sendControl('playPause') },
+//                 { label: 'Rewind 5s', click: () => sendControl('rewind') },
+//                 { label: 'Forward 5s', click: () => sendControl('forward') },
+//                 { type: 'separator' },
+//                 { label: 'Volume Up', click: () => sendControl('volumeUp') },
+//                 { label: 'Volume Down', click: () => sendControl('volumeDown') },
+//             ],
+//         },
+//     ];
+//     const menu = Menu.buildFromTemplate(template);
+//     Menu.setApplicationMenu(menu);
+// }
+
+// ipcMain.on('control-from-renderer', (event, action) => {
+//     console.log(`Renderer triggered action: ${action}`);
+//     // You can handle this further if needed (e.g. sync with other windows)
+// });
+
+app.on('will-quit', () => {
+    globalShortcut.unregisterAll();
+});
 
 function validateUrl(value) {
   return /^(?:(?:(?:https?|ftp):)?\/\/)(?:\S+(?::\S*)?@)?(?:(?!(?:10|127)(?:\.\d{1,3}){3})(?!(?:169\.254|192\.168)(?:\.\d{1,3}){2})(?!172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)(?:\.(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)*(?:\.(?:[a-z\u00a1-\uffff]{2,})))(?::\d{2,5})?(?:[/?#]\S*)?$/i.test(value);

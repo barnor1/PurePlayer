@@ -1,3 +1,4 @@
+// === renderer.js ===
 const { ipcRenderer } = require('electron');
 
 const sliderElement = document.querySelector('#slider')
@@ -33,8 +34,7 @@ document.addEventListener('touchend', function (e) {
     }
 }, true);
 
-docu
-ment.addEventListener('touchmove', function (e) {
+document.addEventListener('touchmove', function (e) {
     if (scalingWithTouch) {
         //zoom
         // delta between e.touches[1], e.touches[0] and initTouches[1], initTouches[0]
@@ -93,21 +93,23 @@ const zoom = (nextScale, event) => {
  */
 
 var player;
-function onYouTubeIframeAPIReady() { } // idk why it breaks without this
+function onYouTubeIframeAPIReady() {
+   // embedYoutubeVideo();
+}
 
 function onPlayerReady(event) {
-    event.target.setVolume(0);
+    event.target.setVolume(50);
     event.target.mute();
 
     // lifts youtube video to last element at the root of body 
     event.target.getIframe().contentDocument.body.appendChild(player.getIframe().contentDocument.querySelector('video'))
 
     event.target.playVideo();
-
-    // --- Custom code ---
+    
+    //--- custom code ---
     addVideoControls();
     setupKeyboardShortcuts();
-    // --- End of Custom Code ---
+    //--- end of custom code ---
 }
 
 
@@ -120,7 +122,7 @@ function onPlayerStateChange(event) {
         /*
         videoElement.addEventListener('timeupdate', function(){
             //if im the editvideo
-            if(document.querySelector(`.editVideo[data-idcode="${this.dataset.idcode}"]`)){
+            if(document.querySelector(.editVideo[data-idcode="${this.dataset.idcode}"])){
                 onPlayerProgress.apply(this, arguments)
             }
         })*/
@@ -128,11 +130,11 @@ function onPlayerStateChange(event) {
         let videoWidth = videoElement.videoWidth
         let videoHeight = videoElement.videoHeight
         //console.log('inside onPlayerStateChange', videoWidth, videoHeight)
-        let idcode = event.target.getIframe().parentElement.dataset.idcode
+        let idcode = event.target.getIframe().parentElement.dataset.idcode;
 
         videoElement.dataset.idcode = idcode
         //console.log('after onPlayerStateChange', videoElement.dataset.idcode, videoWidth, videoHeight)
-        myAPI.updateYoutubeOriginalSize(idcode, videoWidth, videoHeight)
+        myAPI.updateYoutubeOriginalSize(idcode, 0, 0);
         //event.target.getIframe().parentElement.style.width = videoWidth + 'px'
         //event.target.getIframe().parentElement.style.height = videoHeight + 'px'
         done = true;
@@ -193,129 +195,159 @@ function embedYoutubeVideo() {
     });
 }
 
-// --- Custom Code ---
-function addVideoControls() {
-    const controls = document.createElement('div');
-    controls.id = 'customVideoControls';
-    controls.innerHTML = `
-        <style>
-            #customVideoControls {
-                position: fixed;
-                bottom: 20px;
-                left: 50%;
-                transform: translateX(-50%);
-                background: rgba(30, 30, 30, 0.85);
-                padding: 12px 20px;
-                border-radius: 10px;
-                display: flex;
-                gap: 15px;
-                align-items: center;
-                z-index: 10000;
-                box-shadow: 0 0 10px rgba(0,0,0,0.4);
-            }
-            #customVideoControls button {
-                background: #444;
-                border: none;
-                color: white;
-                font-size: 18px;
-                padding: 8px 12px;
-                border-radius: 6px;
-                cursor: pointer;
-                transition: background 0.3s;
-            }
-            #customVideoControls button:hover {
-                background: #666;
-            }
-            #customVideoControls input[type="range"] {
-                width: 100px;
-            }
-        </style>
-        <button id="rewindBtn">⏪ 5s</button>
-        <button id="playPauseBtn">▶️/⏸️</button>
-        <button id="forwardBtn">5s ⏩</button>
-        <input type="range" id="volumeSlider" min="0" max="100" value="50" title="Volume">
-    `;
-    document.body.appendChild(controls);
-    wireUpControlEvents();
-}
+// ---custom cose ---
+// function embedYoutubeVideo() {
+//     var playerNeedsSetup = document.querySelector('.playerNeedsSetup');
+//     if (!playerNeedsSetup) return;
+//     playerNeedsSetup.classList.remove('playerNeedsSetup');
+//     var iframediv = playerNeedsSetup.querySelector('.iframeDiv');
+//     var code = playerNeedsSetup.dataset.idcode;
 
-function wireUpControlEvents() {
-    const playPauseBtn = document.getElementById('playPauseBtn');
-    const rewindBtn = document.getElementById('rewindBtn');
-    const forwardBtn = document.getElementById('forwardBtn');
-    const volumeSlider = document.getElementById('volumeSlider');
+//     player = new YT.Player(iframediv, {
+//         videoId: code,
+//         playerVars: {
+//             'controls': 0,
+//             'disablekb': 1,
+//             'enablejsapi': 1,
+//             'fs': 0,
+//             'loop': 1
+//         },
+//         events: {
+//             'onReady': onPlayerReady,
+//             'onStateChange': onPlayerStateChange
+//         }
+//     });
+// }
 
-    playPauseBtn.addEventListener('click', () => {
-        const state = player.getPlayerState();
-        if (state === YT.PlayerState.PLAYING) player.pauseVideo();
-        else player.playVideo();
-    });
+// function addVideoControls() {
+//     const controls = document.createElement('div');
+//     controls.id = 'customVideoControls';
+//     controls.innerHTML = `
+//         <style>
+//             #customVideoControls {
+//                 position: fixed;
+//                 bottom: 20px;
+//                 left: 50%;
+//                 transform: translateX(-50%);
+//                 background: rgba(30, 30, 30, 0.85);
+//                 padding: 12px 20px;
+//                 border-radius: 10px;
+//                 display: flex;
+//                 gap: 15px;
+//                 align-items: center;
+//                 z-index: 10000;
+//                 box-shadow: 0 0 10px rgba(0,0,0,0.4);
+//             }
+//             #customVideoControls button {
+//                 background: #444;
+//                 border: none;
+//                 color: white;
+//                 font-size: 18px;
+//                 padding: 8px 12px;
+//                 border-radius: 6px;
+//                 cursor: pointer;
+//                 transition: background 0.3s;
+//             }
+//             #customVideoControls button:hover {
+//                 background: #666;
+//             }
+//             #customVideoControls input[type="range"] {
+//                 width: 100px;
+//             }
+//         </style>
+//         <button id="rewindBtn">⏪ 5s</button>
+//         <button id="playPauseBtn">▶️/⏸️</button>
+//         <button id="forwardBtn">5s ⏩</button>
+//         <input type="range" id="volumeSlider" min="0" max="100" value="50" title="Volume">
+//     `;
+//     document.body.appendChild(controls);
+//     wireUpControlEvents();
+// }
 
-    rewindBtn.addEventListener('click', () => {
-        const currentTime = player.getCurrentTime();
-        player.seekTo(Math.max(currentTime - 5, 0), true);
-    });
+// function togglePlayPause() {
+//     const state = player.getPlayerState();
+//     if (state === YT.PlayerState.PLAYING) player.pauseVideo();
+//     else player.playVideo();
+// }
 
-    forwardBtn.addEventListener('click', () => {
-        const currentTime = player.getCurrentTime();
-        player.seekTo(Math.min(currentTime + 5, player.getDuration()), true);
-    });
+// function sendControlToMain(action) {
+//     ipcRenderer.send('control-from-renderer', action);
+// }
 
-    volumeSlider.addEventListener('input', (e) => {
-        const volume = parseInt(e.target.value, 10);
-        player.setVolume(volume);
-        if (volume === 0) player.mute();
-        else player.unMute();
-    });
-}
+// function wireUpControlEvents() {
+//     const playPauseBtn = document.getElementById('playPauseBtn');
+//     const rewindBtn = document.getElementById('rewindBtn');
+//     const forwardBtn = document.getElementById('forwardBtn');
+//     const volumeSlider = document.getElementById('volumeSlider');
 
-function setupKeyboardShortcuts() {
-    document.addEventListener('keydown', (e) => {
-        if (!player) return;
-        switch (e.code) {
-            case 'Space':
-                e.preventDefault();
-                const state = player.getPlayerState();
-                if (state === YT.PlayerState.PLAYING) player.pauseVideo();
-                else player.playVideo();
-                break;
-            case 'ArrowLeft':
-                player.seekTo(Math.max(player.getCurrentTime() - 5, 0), true);
-                break;
-            case 'ArrowRight':
-                player.seekTo(Math.min(player.getCurrentTime() + 5, player.getDuration()), true);
-                break;
-            case 'ArrowDown':
-                player.setVolume(Math.max(player.getVolume() - 10, 0));
-                break;
-            case 'ArrowUp':
-                player.setVolume(Math.min(player.getVolume() + 10, 100));
-                break;
-        }
-    });
-}
+//     playPauseBtn.addEventListener('click', () => {
+//         togglePlayPause();
+//         sendControlToMain('playPause');
+//     });
 
-ipcRenderer.on('video-control', (event, action) => {
-    if (!player) return;
-    switch (action) {
-        case 'playPause':
-            const state = player.getPlayerState();
-            if (state === YT.PlayerState.PLAYING) player.pauseVideo();
-            else player.playVideo();
-            break;
-        case 'rewind':
-            player.seekTo(Math.max(player.getCurrentTime() - 5, 0), true);
-            break;
-        case 'forward':
-            player.seekTo(Math.min(player.getCurrentTime() + 5, player.getDuration()), true);
-            break;
-        case 'volumeUp':
-            player.setVolume(Math.min(player.getVolume() + 10, 100));
-            break;
-        case 'volumeDown':
-            player.setVolume(Math.max(player.getVolume() - 10, 0));
-            break;
-    }
-});
+//     rewindBtn.addEventListener('click', () => {
+//         const currentTime = player.getCurrentTime();
+//         player.seekTo(Math.max(currentTime - 5, 0), true);
+//         sendControlToMain('rewind');
+//     });
 
-// --- End Of Custom Code ---
+//     forwardBtn.addEventListener('click', () => {
+//         const currentTime = player.getCurrentTime();
+//         player.seekTo(Math.min(currentTime + 5, player.getDuration()), true);
+//         sendControlToMain('forward');
+//     });
+
+//     volumeSlider.addEventListener('input', (e) => {
+//         const volume = parseInt(e.target.value, 10);
+//         player.setVolume(volume);
+//         if (volume === 0) player.mute();
+//         else player.unMute();
+//         sendControlToMain(`volume:${volume}`);
+//     });
+// }
+
+// function setupKeyboardShortcuts() {
+//     document.addEventListener('keydown', (e) => {
+//         if (!player) return;
+//         switch (e.code) {
+//             case 'Space':
+//                 e.preventDefault();
+//                 togglePlayPause();
+//                 break;
+//             case 'ArrowLeft':
+//                 player.seekTo(Math.max(player.getCurrentTime() - 5, 0), true);
+//                 break;
+//             case 'ArrowRight':
+//                 player.seekTo(Math.min(player.getCurrentTime() + 5, player.getDuration()), true);
+//                 break;
+//             case 'ArrowDown':
+//                 player.setVolume(Math.max(player.getVolume() - 10, 0));
+//                 break;
+//             case 'ArrowUp':
+//                 player.setVolume(Math.min(player.getVolume() + 10, 100));
+//                 break;
+//         }
+//     });
+// }
+
+// ipcRenderer.on('video-control', (event, action) => {
+//     if (!player) return;
+//     switch (action) {
+//         case 'playPause':
+//             togglePlayPause();
+//             break;
+//         case 'rewind':
+//             player.seekTo(Math.max(player.getCurrentTime() - 5, 0), true);
+//             break;
+//         case 'forward':
+//             player.seekTo(Math.min(player.getCurrentTime() + 5, player.getDuration()), true);
+//             break;
+//         case 'volumeUp':
+//             player.setVolume(Math.min(player.getVolume() + 10, 100));
+//             break;
+//         case 'volumeDown':
+//             player.setVolume(Math.max(player.getVolume() - 10, 0));
+//             break;
+//     }
+// });
+// --- end of custom code ---
