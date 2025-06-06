@@ -1,187 +1,182 @@
 
-const sliderElement = document.querySelector('#slider')
-noUiSlider.create(sliderElement, {
+// ✅ Slider Setup
+const slider = document.querySelector('#slider');
+noUiSlider.create(slider, {
     start: [0, 100],
     connect: true,
     behaviour: 'unconstrained-tap',
     range: {
-        'min': 0,
-        'max': 100
+        min: 0,
+        max: 100
     }
 });
 slider.noUiSlider.on('start', function () {
-
+    // You can do something when the slider starts being dragged
 });
 
-let scalingWithTouch = false
-let lastDelta = 0
+let scalingWithTouch = false;
+let lastDelta = 0;
+let initTouches = [];
 
-let initTouches = []
-//ontouchstart
 document.addEventListener('touchstart', function (e) {
     if (e.touches.length > 1) {
-        scalingWithTouch = true
-        initTouches = e.touches
+        scalingWithTouch = true;
+        initTouches = [...e.touches]; // shallow clone
     }
 }, true);
 
 document.addEventListener('touchend', function (e) {
     if (e.touches.length < 2) {
-        scalingWithTouch = false
+        scalingWithTouch = false;
     }
 }, true);
 
 document.addEventListener('touchmove', function (e) {
-    if (scalingWithTouch) {
-        //zoom
-        // delta between e.touches[1], e.touches[0] and initTouches[1], initTouches[0]
-        let delta = Math.sqrt(Math.pow(e.touches[0].clientX - e.touches[1].clientX, 2) + Math.pow(e.touches[0].clientY - e.touches[1].clientY, 2)) - Math.sqrt(Math.pow(initTouches[0].clientX - initTouches[1].clientX, 2) + Math.pow(initTouches[0].clientY - initTouches[1].clientY, 2))
-        let deltaDiff = delta - lastDelta
-        deltaDiff = deltaDiff / 100
-        currentScale = parseFloat(document.body.dataset.currentScale) || 1
-        const nextScale = Math.max(currentScale + deltaDiff * (currentScale / 2), 0.01)
-        console.log("touchmove", deltaDiff, currentScale, nextScale)
-        e.clientX = (initTouches[0].clientX + initTouches[0].clientX) / 2
-        e.clientY = (initTouches[0].clientY + initTouches[0].clientY) / 2
-        //zoom(nextScale, e) // this is not working
-        lastDelta = delta
+    if (scalingWithTouch && e.touches.length > 1) {
+        const newDist = Math.hypot(
+            e.touches[0].clientX - e.touches[1].clientX,
+            e.touches[0].clientY - e.touches[1].clientY
+        );
+        const initDist = Math.hypot(
+            initTouches[0].clientX - initTouches[1].clientX,
+            initTouches[0].clientY - initTouches[1].clientY
+        );
+        const delta = newDist - initDist;
+        let deltaDiff = (delta - lastDelta) / 100;
+
+        let currentScale = parseFloat(document.body.dataset.currentScale) || 1;
+        const nextScale = Math.max(currentScale + deltaDiff * (currentScale / 2), 0.01);
+
+        const centerX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+        const centerY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+
+        console.log("touchmove", deltaDiff, currentScale, nextScale);
+        zoom(nextScale, { clientX: centerX, clientY: centerY });
+
+        lastDelta = delta;
     }
 }, true);
 
-const factor = 0.1
+const factor = 0.1;
 document.documentElement.addEventListener("wheel", (e) => {
-    let delta = e.wheelDelta / 120
-    if (e.ctrlKey) { // is pinch zoom on touchpad(idk why it's ctrlKey but it is)
-        delta = e.deltaY * factor
+    let delta = e.wheelDelta ? e.wheelDelta / 120 : -e.deltaY * factor;
+    if (e.ctrlKey) { // pinch-zoom gesture
+        delta = e.deltaY * factor;
     }
+
     if (document.querySelector('.editVideo')) return;
-    currentScale = parseFloat(document.body.dataset.currentScale) || 1
 
-    const nextScale = Math.max(currentScale + delta * (currentScale / 2), 0.01)
-    console.log("wheel", delta, currentScale, nextScale)
-    zoom(nextScale, e)
+    let currentScale = parseFloat(document.body.dataset.currentScale) || 1;
+    const nextScale = Math.max(currentScale + delta * (currentScale / 2), 0.01);
+    console.log("wheel", delta, currentScale, nextScale);
 
-})
+    zoom(nextScale, e);
+});
 
 const zoom = (nextScale, event) => {
-    currentScale = parseFloat(document.body.dataset.currentScale) || 1
+    let currentScale = parseFloat(document.body.dataset.currentScale) || 1;
+    const ratio = 1 - nextScale / currentScale;
 
-    const ratio = 1 - nextScale / currentScale
+    const { clientX, clientY } = event;
 
-    const {
-        clientX,
-        clientY
-    } = event
+    let translateX = parseFloat(document.body.dataset.translateX) || 0;
+    let translateY = parseFloat(document.body.dataset.translateY) || 0;
 
-    let translateX = (parseFloat(document.body.dataset.translateX) || 0);
-    let translateY = (parseFloat(document.body.dataset.translateY) || 0);
+    translateX += (clientX - translateX) * ratio;
+    translateY += (clientY - translateY) * ratio;
 
-    translateX += (clientX - translateX) * ratio
-    translateY += (clientY - translateY) * ratio
-    console.log('zoom')
+    console.log('zoom');
+    currentScale = nextScale;
 
-    //console.log(translateX, translateY, nextScale, ratio, currentScale)
-    currentScale = nextScale
-    myAPI.updateScaleAndTranslate(currentScale, { translateX, translateY })
-}
+    myAPI.updateScaleAndTranslate(currentScale, { translateX, translateY });
+};
 
 /**
- * Youtube Embed Section
+ * YouTube Embed Section
  */
-
 var player;
+
 function onYouTubeIframeAPIReady() {
-    //--- custom code ---
-    embedYoutubeVideo()
-    //--- end of custom code ---
- } // idk why it breaks without this
+    embedYoutubeVideo();
+}
 
 function onPlayerReady(event) {
     event.target.setVolume(50);
     event.target.mute();
 
-    // lifts youtube video to last element at the root of body 
-    event.target.getIframe().contentDocument.body.appendChild(player.getIframe().contentDocument.querySelector('video'))
+    // ⚠️ DOM manipulation hack (may break in some browsers)
+    const iframeDoc = event.target.getIframe().contentDocument;
+    if (iframeDoc) {
+        const video = iframeDoc.querySelector('video');
+        if (video) iframeDoc.body.appendChild(video);
+    }
 
     event.target.playVideo();
-
 }
 
-
 var done = false;
+
 function onPlayerStateChange(event) {
     if (event.data == YT.PlayerState.PLAYING && !done) {
-        //setTimeout(stopVideo, 6000);
-        let videoElement = event.target.getIframe().contentDocument.querySelector('video')
-        videoElement.loop = true
-        /*
-        videoElement.addEventListener('timeupdate', function(){
-            //if im the editvideo
-            if(document.querySelector(`.editVideo[data-idcode="${this.dataset.idcode}"]`)){
-                onPlayerProgress.apply(this, arguments)
-            }
-        })*/
+        let videoElement = event.target.getIframe().contentDocument.querySelector('video');
+        if (!videoElement) return;
 
-        let videoWidth = videoElement.videoWidth
-        let videoHeight = videoElement.videoHeight
-        //console.log('inside onPlayerStateChange', videoWidth, videoHeight)
-        let idcode = event.target.getIframe().parentElement.dataset.idcode
+        videoElement.loop = true;
 
-        videoElement.dataset.idcode = idcode
-        //console.log('after onPlayerStateChange', videoElement.dataset.idcode, videoWidth, videoHeight)
-        myAPI.updateYoutubeOriginalSize(idcode, videoWidth, videoHeight)
-        //event.target.getIframe().parentElement.style.width = videoWidth + 'px'
-        //event.target.getIframe().parentElement.style.height = videoHeight + 'px'
+        let videoWidth = videoElement.videoWidth;
+        let videoHeight = videoElement.videoHeight;
+        let idcode = event.target.getIframe().parentElement.dataset.idcode;
+
+        videoElement.dataset.idcode = idcode;
+
+        myAPI.updateYoutubeOriginalSize(idcode, videoWidth, videoHeight);
+
         done = true;
     }
 }
+
 function stopVideo() {
     player.stopVideo();
 }
+
 const targetNode = document.getElementById('eventTrigger');
 const config = { attributes: true };
 const callback = function (mutationsList, observer) {
-    // Use traditional 'for loops' for IE 11
     for (const mutation of mutationsList) {
-        if (mutation.type === 'childList') {
-            console.log('A child node has been added or removed.');
-        }
-        else if (mutation.type === 'attributes') {
-            console.log('The ' + mutation.attributeName + ' attribute was modified.');
-            if (mutation.attributeName == 'data-youtubetrigger') {
-                embedYoutubeVideo()
-            } else if (mutation.attributeName == 'data-changesliders') {
-                //console.log(mutation)
-                //
-                let changesliders = JSON.parse(mutation.target.dataset.changesliders)
+        if (mutation.type === 'attributes') {
+            if (mutation.attributeName === 'data-youtubetrigger') {
+                embedYoutubeVideo();
+            } else if (mutation.attributeName === 'data-changesliders') {
+                let changesliders = JSON.parse(mutation.target.dataset.changesliders);
                 slider.noUiSlider.set(changesliders);
             }
-
         }
     }
 };
-const observer = new MutationObserver(callback);
-// Start observing the target node for configured mutations
-observer.observe(targetNode, config);
-function embedYoutubeVideo() {
-    var playerNeedsSetup = document.querySelector('.playerNeedsSetup');
-    if (!playerNeedsSetup) {
-        console.error('embedYoutubeVideo called without player div to setup')
-    };
-    playerNeedsSetup.classList.remove('playerNeedsSetup')
-    var iframediv = playerNeedsSetup.querySelector('.iframeDiv')
-    var code = playerNeedsSetup.dataset.idcode
 
-    //document.querySelector()
+const observer = new MutationObserver(callback);
+observer.observe(targetNode, config);
+
+function embedYoutubeVideo() {
+    const playerNeedsSetup = document.querySelector('.playerNeedsSetup');
+    if (!playerNeedsSetup) {
+        console.error('embedYoutubeVideo called without player div to setup');
+        return;
+    }
+
+    playerNeedsSetup.classList.remove('playerNeedsSetup');
+    const iframediv = playerNeedsSetup.querySelector('.iframeDiv');
+    const code = playerNeedsSetup.dataset.idcode;
+
     player = new YT.Player(iframediv, {
         videoId: code,
         playerVars: {
-            //'playsinline': 1
-            'controls': 0,
-            'disablekb': 1,
-            'enablejsapi': 1,
-            'fs': 0,
-            'loop': 1
+            controls: 1,     // ✅ Show YouTube controls
+            disablekb: 1,    // ✅ Allow keyboard control
+            enablejsapi: 1,
+            fs: 0,
+            loop: 1,
+            modestbranding: 1,
         },
         events: {
             'onReady': onPlayerReady,

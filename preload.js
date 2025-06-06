@@ -221,6 +221,7 @@ document.addEventListener('keyup', evt => {
 
 function getSelected() {
   if (document.querySelector('.editVideo')) return { type: 'edit-video' }
+  
   let lastIndex = state.elements.length - 1
   if (!state.elements[lastIndex] || !state.elements[lastIndex].element.classList.contains('selectedItem')) return null
 
@@ -323,6 +324,26 @@ document.addEventListener('mouseup', (e) => {
     }
   }
 })
+// --- custom code 5 ---
+// document.addEventListener('click', (event) => {
+//   const target = event.target;
+
+//   if (target.tagName.toLowerCase() === 'video') {
+//     // Assign unique ID if it doesn't have one
+//     if (!target.id) {
+//       target.id = 'video-' + Date.now(); // or use UUID
+//     }
+
+//     // Mark it as selected (optional, for styling or logic)
+//     document.querySelectorAll('video').forEach(v => v.classList.remove('selectedItem'));
+//     target.classList.add('selectedItem');
+
+//     // Send ID to main process
+//     window.electronAPI.send('video-selected', target.id);
+//   }
+// });
+
+// --- end if custom code 5 ---
 ipcRenderer.on('close-edit-video', (event, newState) => {
   closeEditVideo()
 })
@@ -353,48 +374,89 @@ ipcRenderer.on('clipboard', (event, msg) => {
     addMediaWithPath(payload[payload.type], payload.type)
 })
 //  --- custom code ---
+// Utility function to get the currently selected video
+// function getActiveVideo() {
+//   return document.querySelector('video.selectedItem'); // or whichever way you mark selected video
+// }
 
-ipcRenderer.on('toggle-video', (event, newState) => {
-  const video = document.querySelector('video')
-  if (video) {
-    video.paused ? video.play() : video.pause()
+// -------------
+// Respond to main process commands
+window.electronAPI.on('control-video', (event, { id, action }) => {
+  const video = document.getElementById(id) || getActiveVideo();
+  if (!video) return;
+
+  switch (action) {
+    // case 'play':
+    //   video.play();
+    //   break;
+    // case 'pause':
+    //   video.pause();
+    //   break;
+    case 'toggle-video':
+      video.paused ? video.play() : video.pause()
+      break;
+    case 'mute':
+      video.muted = true;
+      break;
+    case 'unmute':
+      video.muted = false;
+      break;
+    case 'volume-up':
+      video.volume = Math.min(1, video.volume + 0.1);
+      break;
+    case 'volume-down':
+      video.volume = Math.max(0, video.volume - 0.1);
+      break;
+    case 'rewind':
+      video.currentTime = Math.max(0, video.currentTime - 10);
+      break;
+    case 'forward':
+      video.currentTime = Math.min(video.duration, video.currentTime + 10);
+      break;
   }
 });
 
-ipcRenderer.on('rewind-video', (event, newState) => {
-  const video = document.querySelector('video')
-  if (video) {
-    video.currentTime = Math.max(0, video.currentTime - 10)
-  }
-});
+// ipcRenderer.on('toggle-video', (event, newState) => {
+//   const video = document.querySelector('video')
+//   if (video) {
+//     video.paused ? video.play() : video.pause()
+//   }
+// });
 
-ipcRenderer.on('forward-video', (event, newState) => {
-  const video = document.querySelector('video')
-  if (video) {
-    video.currentTime = Math.min(video.duration, video.currentTime + 10)
-  }
-});
+// ipcRenderer.on('rewind-video', (event, newState) => {
+//   const video = document.querySelector('video')
+//   if (video) {
+//     video.currentTime = Math.max(0, video.currentTime - 10)
+//   }
+// });
 
-ipcRenderer.on('mute-unmute', (event, newState) => {
-  const video = document.querySelector('video')
-  if (video) {
-    video.muted = !video.muted
-  }
-});
+// ipcRenderer.on('forward-video', (event, newState) => {
+//   const video = document.querySelector('video')
+//   if (video) {
+//     video.currentTime = Math.min(video.duration, video.currentTime + 10)
+//   }
+// });
 
-ipcRenderer.on('volume-up', (event, newState) => {
-  const video = document.querySelector('video')
-  if (video) {
-    video.volume = Math.min(1, video.volume + 0.1)
-  }
-});
+// ipcRenderer.on('mute-unmute', (event, newState) => {
+//   const video = document.querySelector('video')
+//   if (video) {
+//     video.muted = !video.muted
+//   }
+// });
 
-ipcRenderer.on('volume-down', (event, newState) => {
-  const video = document.querySelector('video')
-  if (video) {
-    video.volume = Math.max(0, video.volume - 0.1)
-  }
-});
+// ipcRenderer.on('volume-up', (event, newState) => {
+//   const video = document.querySelector('video')
+//   if (video) {
+//     video.volume = Math.min(1, video.volume + 0.1)
+//   }
+// });
+
+// ipcRenderer.on('volume-down', (event, newState) => {
+//   const video = document.querySelector('video')
+//   if (video) {
+//     video.volume = Math.max(0, video.volume - 0.1)
+//   }
+// });
 // end of custom code ---
 function getCenterOfWindowScaled() {
   const width = window.innerWidth;
@@ -436,6 +498,9 @@ function addMediaWithPath(path, type = 'img', loadedState) {
     mediaElement.src = path;
   } else if (type == 'video') {
     mediaElement = document.createElement('video')
+    // --custom code 4 ---
+    // mediaElement.id =  'video-' + Date.now(); // or use a counter or UUID
+    // --- end of custom code 8 ---
     mediaElement.autoplay = true;
     mediaElement.loop = true;
     mediaElement.muted = true;
@@ -450,6 +515,10 @@ function addMediaWithPath(path, type = 'img', loadedState) {
       var code = extractYoutubeId(path)
       if (code == null) return;
       mediaElement = document.createElement('div')
+
+      // --custom code 4 ---
+      // mediaElement.id =  'video-' + Date.now(); // or use a counter or UUID
+      // --- end of custom code 8 ---
       mediaElement.classList.add('youtubePlayer')
       mediaElement.classList.add('playerNeedsSetup')
       mediaElement.dataset.idcode = code
@@ -711,6 +780,20 @@ interact('.draggable')
   }).on('tap', function (event) {
     var target = event.target
 
+    // ---custom code 3 --
+  //    const target = event.target;
+
+  // if (target.tagName === 'VIDEO') {
+  //   // Assign a unique ID if it doesn't have one
+  //   if (!target.dataset.vid) {
+  //     const uniqueId = 'video_' + Date.now();
+  //     target.dataset.vid = uniqueId;
+  //     target.id = uniqueId;
+  //   }
+
+  //   ipcRenderer.send('video-selected', target.dataset.vid);
+  // }
+    //end of custom code 3 ---
     handleSelected(target)
     //
     event.preventDefault()
@@ -765,6 +848,25 @@ interact('.selectedItem').resizable({
   handleSelected(target)
   //
   event.preventDefault()
+
+  // --- custom code 3 --
+  //  const target = event.target;
+
+  // if (target.tagName === 'VIDEO') {
+  //   // Assign a unique ID if it doesn't have one
+  //   if (!target.dataset.vid) {
+  //     const uniqueId = 'video_' + Date.now();
+  //     target.dataset.vid = uniqueId;
+  //     target.id = uniqueId;
+  //   }
+
+  //   ipcRenderer.send('video-selected', target.dataset.vid);
+  // }
+
+  // handleSelected(target);
+  // event.preventDefault();
+
+  //--- end of custom code 3 ---
 })
 
 function deleteSelected() {

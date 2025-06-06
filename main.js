@@ -210,61 +210,103 @@ app.whenReady().then(() => {
   }));
 //--- Custom code ---
 contextMenu.append(new MenuItem({
-  label: "Pause/Play", type: 'submenu',
+  label: "Video Settings", type: 'submenu',
   submenu: playerSubmenu
 }));
 
 playerSubmenu.append(new MenuItem({
   id: "toggle-video", label: 'Toggle Player', visible: true,
   accelerator: 'Space',
-  click: (menuItem, browserWindow, event) => {
-    console.log('toggling');
-    mainWin.webContents.send('toggle-video')
+  // click: (menuItem, browserWindow, event) => {
+    click: () => {
+    console.log('Sending toggle/play/pause video to video ID:', selectedVideoId);
+       // mainWin.webContents.send('toggle-video')
+    if (selectedVideoId) {
+      mainWin.webContents.send('control-video', {
+        id: selectedVideoId,
+        action: 'toggle-video'
+      });
+    }
   }
 }));
 
 playerSubmenu.append(new MenuItem({
   id: "rewind-video", label: 'Rewind 10s', visible: true,
   accelerator: 'Left',
-  click: (menuItem, browserWindow, event) => {
-    console.log('rewinding');
-    mainWin.webContents.send('rewind-video')
+  // click: (menuItem, browserWindow, event) => {
+    click: () => {
+    console.log('Sending rewind video to video ID:', selectedVideoId);
+    //mainWin.webContents.send('rewind-video')
+    if (selectedVideoId) {
+      mainWin.webContents.send('control-video', {
+        id: selectedVideoId,
+        action: 'rewind-video'
+      });
+    }
   }
 }));
 
 playerSubmenu.append(new MenuItem({
   id: "forward-video", label: 'Forward 10s', visible: true,
   accelerator: 'Right',
-  click: (menuItem, browserWindow, event) => {
-    console.log('forwarding');
-    mainWin.webContents.send('forward-video')
+  // click: (menuItem, browserWindow, event) => {
+    click: () => {
+    console.log('Sending foward video to video ID:', selectedVideoId);
+    //mainWin.webContents.send('forward-video')
+    if (selectedVideoId) {
+      mainWin.webContents.send('control-video', {
+        id: selectedVideoId,
+        action: 'forward-video'
+      });
+    }
   }
 }));
 
 playerSubmenu.append(new MenuItem({
   id: "mute-unmute", label: 'Mute/Unmute', visible: true,
   accelerator: process.platform === 'darwin' ? 'Cmd+X' : 'Ctrl+X',
-  click: (menuItem, browserWindow, event) => {
-    console.log('muting/unmuting');
-    mainWin.webContents.send('mute-unmute')
+  // click: (menuItem, browserWindow, event) => {
+    click: () => {
+    // console.log('muting/unmuting');
+    // mainWin.webContents.send('mute-unmute')
+    console.log('Sending mute/unmute to video ID:', selectedVideoId);
+    if (selectedVideoId) {
+      mainWin.webContents.send('control-video', {
+        id: selectedVideoId,
+        action: 'mute-unmute'
+      });
+    }
   }
 }));
 
 playerSubmenu.append(new MenuItem({
   id: "volume-up", label: 'Volume Up', visible: true,
   accelerator: 'Up',
-  click: (menuItem, browserWindow, event) => {
-    console.log('volume up');
-    mainWin.webContents.send('volume-up')
+  // click: (menuItem, browserWindow, event) => {
+    click: () => {
+    console.log('Sending volume up to video ID:', selectedVideoId);
+    if (selectedVideoId) {
+      mainWin.webContents.send('control-video', {
+        id: selectedVideoId,
+        action: 'volume-up'
+      });
+    }
   }
 }));
 
 playerSubmenu.append(new MenuItem({
   id: "volume-down", label: 'Volume Down', visible: true,
   accelerator: 'Down',
-  click: (menuItem, browserWindow, event) => {
-    console.log('volume down');
-    mainWin.webContents.send('volume-down')
+   // click: (menuItem, browserWindow, event) => {
+    click: () => {
+    console.log('Sending volume down to video ID:', selectedVideoId);
+    // mainWin.webContents.send('volume-down')
+    if (selectedVideoId) {
+      mainWin.webContents.send('control-video', {
+        id: selectedVideoId,
+        action: 'volume-down'
+      });
+    }
   }
 }));
 // --- end custom code ---
@@ -359,48 +401,62 @@ playerSubmenu.append(new MenuItem({
   })
   //  --- custom code ---
 
-  ipcMain.on('toggle-video', (event, menuType) => {
-    const video = document.querySelector('video')
-    if (video) {
-      video.paused ? video.play() : video.pause()
-    }
-  });
+  // ipcMain.on('toggle-video', (event, menuType) => {
+  //   const video = document.querySelector('video')
+  //   if (video) {
+  //     video.paused ? video.play() : video.pause()
+  //   }
+  // });
   
-  ipcMain.on('rewind-video', (event, menuType) => {
-    const video = document.querySelector('video')
-    if (video) {
-      video.currentTime = Math.max(0, video.currentTime - 10)
-    }
-  });
+  // ipcMain.on('rewind-video', (event, menuType) => {
+  //   const video = document.querySelector('video')
+  //   if (video) {
+  //     video.currentTime = Math.max(0, video.currentTime - 10)
+  //   }
+  // });
   
-  ipcMain.on('forward-video', (event, menuType) => {
-    const video = document.querySelector('video')
-    if (video) {
-      video.currentTime = Math.min(video.duration, video.currentTime + 10)
-    }
-  });
+  // ipcMain.on('forward-video', (event, menuType) => {
+  //   const video = document.querySelector('video')
+  //   if (video) {
+  //     video.currentTime = Math.min(video.duration, video.currentTime + 10)
+  //   }
+  // });
   
-  ipcMain.on('mute-unmute', (event, menuType) => {
-    const video = document.querySelector('video')
-    if (video) {
-      video.muted = !video.muted
-    }
-  });
+  // ipcMain.on('mute-unmute', (event, menuType) => {
+  //   const video = document.querySelector('video')
+  //   if (video) {
+  //     video.muted = !video.muted
+  //   }
+  // });
   
-  ipcMain.on('volume-up', (event, menuType) => {
-    const video = document.querySelector('video')
-    if (video) {
-      video.volume = Math.min(1, video.volume + 0.1)
-    }
-  });
+  // ipcMain.on('volume-up', (event, menuType) => {
+  //   const video = document.querySelector('video')
+  //   if (video) {
+  //     video.volume = Math.min(1, video.volume + 0.1)
+  //   }
+  // });
   
-  ipcMain.on('volume-down', (event, menuType) => {
-    const video = document.querySelector('video')
-    if (video) {
-      video.volume = Math.max(0, video.volume - 0.1)
-    }
-  });
+  // ipcMain.on('volume-down', (event, menuType) => {
+  //   const video = document.querySelector('video')
+  //   if (video) {
+  //     video.volume = Math.max(0, video.volume - 0.1)
+  //   }
+  // });
+
+
+  // -----------
+let selectedVideoId = null;
+
+  ipcMain.on('video-selected', (event, videoId) => {
+  console.log(`Renderer selected video with ID: ${videoId}`);
+  
+
+  // Store, manipulate, or respond back to renderer
+  // You can later use this ID to target a specific video
+  selectedVideoId = videoId;
+});
   // --- end of custom code ---
+
   ipcMain.on('save-scene', (event, filePath, stateCopy) => {
     console.log('save', filePath, stateCopy)
     let data = JSON.stringify(stateCopy);
