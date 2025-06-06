@@ -105,10 +105,6 @@ function onPlayerReady(event) {
 
     event.target.playVideo();
 
-    //--custum code ---
-    addVideoControls();
-    setupKeyboardShortcuts();
-    //end of custom code ---
 }
 
 

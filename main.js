@@ -216,7 +216,6 @@ contextMenu.append(new MenuItem({
 
 playerSubmenu.append(new MenuItem({
   id: "toggle-video", label: 'Toggle Player', visible: true,
-  //accelerator: process.platform === 'darwin' ? 'Cmd+Z' : 'Ctrl+Z',
   accelerator: 'Space',
   click: (menuItem, browserWindow, event) => {
     console.log('toggling');
@@ -242,6 +241,32 @@ playerSubmenu.append(new MenuItem({
   }
 }));
 
+playerSubmenu.append(new MenuItem({
+  id: "mute-unmute", label: 'Mute/Unmute', visible: true,
+  accelerator: process.platform === 'darwin' ? 'Cmd+X' : 'Ctrl+X',
+  click: (menuItem, browserWindow, event) => {
+    console.log('muting/unmuting');
+    mainWin.webContents.send('mute-unmute')
+  }
+}));
+
+playerSubmenu.append(new MenuItem({
+  id: "volume-up", label: 'Volume Up', visible: true,
+  accelerator: 'Up',
+  click: (menuItem, browserWindow, event) => {
+    console.log('volume up');
+    mainWin.webContents.send('volume-up')
+  }
+}));
+
+playerSubmenu.append(new MenuItem({
+  id: "volume-down", label: 'Volume Down', visible: true,
+  accelerator: 'Down',
+  click: (menuItem, browserWindow, event) => {
+    console.log('volume down');
+    mainWin.webContents.send('volume-down')
+  }
+}));
 // --- end custom code ---
   contextMenu.append(new MenuItem({
     label: 'Load',
@@ -352,6 +377,27 @@ playerSubmenu.append(new MenuItem({
     const video = document.querySelector('video')
     if (video) {
       video.currentTime = Math.min(video.duration, video.currentTime + 10)
+    }
+  });
+  
+  ipcMain.on('mute-unmute', (event, menuType) => {
+    const video = document.querySelector('video')
+    if (video) {
+      video.muted = !video.muted
+    }
+  });
+  
+  ipcMain.on('volume-up', (event, menuType) => {
+    const video = document.querySelector('video')
+    if (video) {
+      video.volume = Math.min(1, video.volume + 0.1)
+    }
+  });
+  
+  ipcMain.on('volume-down', (event, menuType) => {
+    const video = document.querySelector('video')
+    if (video) {
+      video.volume = Math.max(0, video.volume - 0.1)
     }
   });
   // --- end of custom code ---

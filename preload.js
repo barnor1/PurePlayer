@@ -374,6 +374,27 @@ ipcRenderer.on('forward-video', (event, newState) => {
     video.currentTime = Math.min(video.duration, video.currentTime + 10)
   }
 });
+
+ipcRenderer.on('mute-unmute', (event, newState) => {
+  const video = document.querySelector('video')
+  if (video) {
+    video.muted = !video.muted
+  }
+});
+
+ipcRenderer.on('volume-up', (event, newState) => {
+  const video = document.querySelector('video')
+  if (video) {
+    video.volume = Math.min(1, video.volume + 0.1)
+  }
+});
+
+ipcRenderer.on('volume-down', (event, newState) => {
+  const video = document.querySelector('video')
+  if (video) {
+    video.volume = Math.max(0, video.volume - 0.1)
+  }
+});
 // end of custom code ---
 function getCenterOfWindowScaled() {
   const width = window.innerWidth;
