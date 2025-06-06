@@ -381,40 +381,40 @@ ipcRenderer.on('clipboard', (event, msg) => {
 
 // -------------
 // Respond to main process commands
-window.electronAPI.on('control-video', (event, { id, action }) => {
-  const video = document.getElementById(id) || getActiveVideo();
-  if (!video) return;
+// window.electronAPI.on('control-video', (event, { id, action }) => {
+//   const video = document.getElementById(id) || getActiveVideo();
+//   if (!video) return;
 
-  switch (action) {
-    // case 'play':
-    //   video.play();
-    //   break;
-    // case 'pause':
-    //   video.pause();
-    //   break;
-    case 'toggle-video':
-      video.paused ? video.play() : video.pause()
-      break;
-    case 'mute':
-      video.muted = true;
-      break;
-    case 'unmute':
-      video.muted = false;
-      break;
-    case 'volume-up':
-      video.volume = Math.min(1, video.volume + 0.1);
-      break;
-    case 'volume-down':
-      video.volume = Math.max(0, video.volume - 0.1);
-      break;
-    case 'rewind':
-      video.currentTime = Math.max(0, video.currentTime - 10);
-      break;
-    case 'forward':
-      video.currentTime = Math.min(video.duration, video.currentTime + 10);
-      break;
-  }
-});
+//   switch (action) {
+//     // case 'play':
+//     //   video.play();
+//     //   break;
+//     // case 'pause':
+//     //   video.pause();
+//     //   break;
+//     case 'toggle-video':
+//       video.paused ? video.play() : video.pause()
+//       break;
+//     case 'mute':
+//       video.muted = true;
+//       break;
+//     case 'unmute':
+//       video.muted = false;
+//       break;
+//     case 'volume-up':
+//       video.volume = Math.min(1, video.volume + 0.1);
+//       break;
+//     case 'volume-down':
+//       video.volume = Math.max(0, video.volume - 0.1);
+//       break;
+//     case 'rewind':
+//       video.currentTime = Math.max(0, video.currentTime - 10);
+//       break;
+//     case 'forward':
+//       video.currentTime = Math.min(video.duration, video.currentTime + 10);
+//       break;
+//   }
+// });
 
 // ipcRenderer.on('toggle-video', (event, newState) => {
 //   const video = document.querySelector('video')
@@ -437,13 +437,24 @@ window.electronAPI.on('control-video', (event, { id, action }) => {
 //   }
 // });
 
+// --- -- -
 // ipcRenderer.on('mute-unmute', (event, newState) => {
 //   const video = document.querySelector('video')
 //   if (video) {
 //     video.muted = !video.muted
 //   }
 // });
+ipcRenderer.on('mute-unmute', (event, data) => {
+  const videoId = data?.id;
+  if (!videoId) return;
 
+  const video = document.getElementById(videoId);
+  if (video && video.tagName.toLowerCase() === 'video' || video && video.tagName.toLowerCase() === 'youtube') {
+    video.muted = !video.muted;
+  }
+});
+
+//  --- -- -
 // ipcRenderer.on('volume-up', (event, newState) => {
 //   const video = document.querySelector('video')
 //   if (video) {
@@ -903,6 +914,19 @@ function handleSelected(target, dragging = false) {
       state.elements[i].element.dataset.zIndex = i;
     }
   }
+  // --- custom code 7 ---
+    // 👇 Video-specific logic
+    if (target.tagName.toLowerCase() === 'video' || target.tagName.toLowerCase() ===  'youtube') {
+    // if (target.tagName.toLowerCase() === 'video' ) {
+    if (!target.id) {
+      target.id = `video-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    }
+
+    // Send video ID to main process
+    console.log('Sending selected video ID to main:', target.id);
+    ipcRenderer.send('video-selected', target.id);
+  }
+  // --- end of custom code 7 ---
 }
 
 function dragMoveListener(event) {

@@ -17,6 +17,7 @@ const store = new Store();
 //store.clear()
 
 //menu.append(new MenuItem({ label: 'Electron', type: 'checkbox', checked: true }))
+let selectedVideoId = null;
 
 let width = 400;
 let height = 300;
@@ -271,9 +272,8 @@ playerSubmenu.append(new MenuItem({
     // mainWin.webContents.send('mute-unmute')
     console.log('Sending mute/unmute to video ID:', selectedVideoId);
     if (selectedVideoId) {
-      mainWin.webContents.send('control-video', {
-        id: selectedVideoId,
-        action: 'mute-unmute'
+      mainWin.webContents.send('mute-unmute', {
+        id: selectedVideoId
       });
     }
   }
@@ -445,10 +445,9 @@ playerSubmenu.append(new MenuItem({
 
 
   // -----------
-let selectedVideoId = null;
 
   ipcMain.on('video-selected', (event, videoId) => {
-  console.log(`Renderer selected video with ID: ${videoId}`);
+    console.log(`Renderer selected video with ID: ${videoId}`);
   
 
   // Store, manipulate, or respond back to renderer
