@@ -216,10 +216,29 @@ contextMenu.append(new MenuItem({
 
 playerSubmenu.append(new MenuItem({
   id: "toggle-video", label: 'Toggle Player', visible: true,
-  accelerator: process.platform === 'darwin' ? 'Cmd+Z' : 'Ctrl+Z',
-  click: (menuItem, browserWindow,event) => {
+  //accelerator: process.platform === 'darwin' ? 'Cmd+Z' : 'Ctrl+Z',
+  accelerator: 'Space',
+  click: (menuItem, browserWindow, event) => {
     console.log('toggling');
     mainWin.webContents.send('toggle-video')
+  }
+}));
+
+playerSubmenu.append(new MenuItem({
+  id: "rewind-video", label: 'Rewind 10s', visible: true,
+  accelerator: 'Left',
+  click: (menuItem, browserWindow, event) => {
+    console.log('rewinding');
+    mainWin.webContents.send('rewind-video')
+  }
+}));
+
+playerSubmenu.append(new MenuItem({
+  id: "forward-video", label: 'Forward 10s', visible: true,
+  accelerator: 'Right',
+  click: (menuItem, browserWindow, event) => {
+    console.log('forwarding');
+    mainWin.webContents.send('forward-video')
   }
 }));
 
@@ -320,7 +339,21 @@ playerSubmenu.append(new MenuItem({
     if (video) {
       video.paused ? video.play() : video.pause()
     }
-  })
+  });
+  
+  ipcMain.on('rewind-video', (event, menuType) => {
+    const video = document.querySelector('video')
+    if (video) {
+      video.currentTime = Math.max(0, video.currentTime - 10)
+    }
+  });
+  
+  ipcMain.on('forward-video', (event, menuType) => {
+    const video = document.querySelector('video')
+    if (video) {
+      video.currentTime = Math.min(video.duration, video.currentTime + 10)
+    }
+  });
   // --- end of custom code ---
   ipcMain.on('save-scene', (event, filePath, stateCopy) => {
     console.log('save', filePath, stateCopy)

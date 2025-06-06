@@ -90,7 +90,11 @@ const zoom = (nextScale, event) => {
  */
 
 var player;
-function onYouTubeIframeAPIReady() { } // idk why it breaks without this
+function onYouTubeIframeAPIReady() {
+    //--- custom code ---
+    embedYoutubeVideo()
+    //--- end of custom code ---
+ } // idk why it breaks without this
 
 function onPlayerReady(event) {
     event.target.setVolume(50);
@@ -100,6 +104,11 @@ function onPlayerReady(event) {
     event.target.getIframe().contentDocument.body.appendChild(player.getIframe().contentDocument.querySelector('video'))
 
     event.target.playVideo();
+
+    //--custum code ---
+    addVideoControls();
+    setupKeyboardShortcuts();
+    //end of custom code ---
 }
 
 

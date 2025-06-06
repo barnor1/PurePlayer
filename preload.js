@@ -359,7 +359,21 @@ ipcRenderer.on('toggle-video', (event, newState) => {
   if (video) {
     video.paused ? video.play() : video.pause()
   }
-})
+});
+
+ipcRenderer.on('rewind-video', (event, newState) => {
+  const video = document.querySelector('video')
+  if (video) {
+    video.currentTime = Math.max(0, video.currentTime - 10)
+  }
+});
+
+ipcRenderer.on('forward-video', (event, newState) => {
+  const video = document.querySelector('video')
+  if (video) {
+    video.currentTime = Math.min(video.duration, video.currentTime + 10)
+  }
+});
 // end of custom code ---
 function getCenterOfWindowScaled() {
   const width = window.innerWidth;
