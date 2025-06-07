@@ -416,58 +416,67 @@ ipcRenderer.on('clipboard', (event, msg) => {
 //   }
 // });
 
-// ipcRenderer.on('toggle-video', (event, newState) => {
-//   const video = document.querySelector('video')
-//   if (video) {
-//     video.paused ? video.play() : video.pause()
-//   }
-// });
 
-// ipcRenderer.on('rewind-video', (event, newState) => {
-//   const video = document.querySelector('video')
-//   if (video) {
-//     video.currentTime = Math.max(0, video.currentTime - 10)
-//   }
-// });
+ipcRenderer.on('toggle-video', (event, data) => {
+  const videoId = data?.id;
+  if (!videoId) return;
 
-// ipcRenderer.on('forward-video', (event, newState) => {
-//   const video = document.querySelector('video')
-//   if (video) {
-//     video.currentTime = Math.min(video.duration, video.currentTime + 10)
-//   }
-// });
+  const video = document.getElementById(videoId);
+  if (video && video.tagName.toLowerCase() === 'video') {
+    video.paused ? video.play() : video.pause();
+  }
+});
 
-// --- -- -
-// ipcRenderer.on('mute-unmute', (event, newState) => {
-//   const video = document.querySelector('video')
-//   if (video) {
-//     video.muted = !video.muted
-//   }
-// });
+ipcRenderer.on('rewind-video', (event, data) => {
+  const videoId = data?.id;
+  if (!videoId) return;
+
+  const video = document.getElementById(videoId);
+  if (video && video.tagName.toLowerCase() === 'video') {
+    video.currentTime = Math.max(0, video.currentTime - 10);
+  }
+});
+
+ipcRenderer.on('forward-video', (event, data) => {
+  const videoId = data?.id;
+  if (!videoId) return;
+
+  const video = document.getElementById(videoId);
+  if (video && video.tagName.toLowerCase() === 'video') {
+    video.currentTime = Math.min(video.duration, video.currentTime + 10);
+  }
+});
+
 ipcRenderer.on('mute-unmute', (event, data) => {
   const videoId = data?.id;
   if (!videoId) return;
 
   const video = document.getElementById(videoId);
-  if (video && video.tagName.toLowerCase() === 'video' || video && video.tagName.toLowerCase() === 'youtube') {
+  if (video && video.tagName.toLowerCase() === 'video') {
     video.muted = !video.muted;
   }
 });
 
-//  --- -- -
-// ipcRenderer.on('volume-up', (event, newState) => {
-//   const video = document.querySelector('video')
-//   if (video) {
-//     video.volume = Math.min(1, video.volume + 0.1)
-//   }
-// });
+ipcRenderer.on('volume-up', (event, data) => {
+  const videoId = data?.id;
+  if (!videoId) return;
 
-// ipcRenderer.on('volume-down', (event, newState) => {
-//   const video = document.querySelector('video')
-//   if (video) {
-//     video.volume = Math.max(0, video.volume - 0.1)
-//   }
-// });
+  const video = document.getElementById(videoId);
+  if (video && video.tagName.toLowerCase() === 'video') {
+    video.volume = Math.min(1, video.volume + 0.1);
+  }
+});
+
+ipcRenderer.on('volume-down', (event, data) => {
+  const videoId = data?.id;
+  if (!videoId) return;
+
+  const video = document.getElementById(videoId);
+  if (video && video.tagName.toLowerCase() === 'video') {
+    video.volume = Math.max(0, video.volume - 0.1);
+  }
+});
+
 // end of custom code ---
 function getCenterOfWindowScaled() {
   const width = window.innerWidth;

@@ -223,9 +223,8 @@ playerSubmenu.append(new MenuItem({
     console.log('Sending toggle/play/pause video to video ID:', selectedVideoId);
        // mainWin.webContents.send('toggle-video')
     if (selectedVideoId) {
-      mainWin.webContents.send('control-video', {
-        id: selectedVideoId,
-        action: 'toggle-video'
+      mainWin.webContents.send('toggle-video', {
+        id: selectedVideoId
       });
     }
   }
@@ -239,9 +238,8 @@ playerSubmenu.append(new MenuItem({
     console.log('Sending rewind video to video ID:', selectedVideoId);
     //mainWin.webContents.send('rewind-video')
     if (selectedVideoId) {
-      mainWin.webContents.send('control-video', {
-        id: selectedVideoId,
-        action: 'rewind-video'
+      mainWin.webContents.send('rewind-video', {
+        id: selectedVideoId
       });
     }
   }
@@ -255,9 +253,8 @@ playerSubmenu.append(new MenuItem({
     console.log('Sending foward video to video ID:', selectedVideoId);
     //mainWin.webContents.send('forward-video')
     if (selectedVideoId) {
-      mainWin.webContents.send('control-video', {
-        id: selectedVideoId,
-        action: 'forward-video'
+      mainWin.webContents.send('forward-video', {
+        id: selectedVideoId
       });
     }
   }
@@ -286,9 +283,8 @@ playerSubmenu.append(new MenuItem({
     click: () => {
     console.log('Sending volume up to video ID:', selectedVideoId);
     if (selectedVideoId) {
-      mainWin.webContents.send('control-video', {
-        id: selectedVideoId,
-        action: 'volume-up'
+      mainWin.webContents.send('volume-up', {
+        id: selectedVideoId
       });
     }
   }
@@ -302,9 +298,9 @@ playerSubmenu.append(new MenuItem({
     console.log('Sending volume down to video ID:', selectedVideoId);
     // mainWin.webContents.send('volume-down')
     if (selectedVideoId) {
-      mainWin.webContents.send('control-video', {
-        id: selectedVideoId,
-        action: 'volume-down'
+      mainWin.webContents.send('volume-down', {
+        id: selectedVideoId
+
       });
     }
   }
