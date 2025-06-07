@@ -186,18 +186,19 @@ function loadState(loadedState, filePath) {
     ipcRenderer.send('loaded-state', filePath)
   }, 1000);
 }
-
+// --- custom code 11 ---
 // document.addEventListener('keydown', evt => {
-//   mouseObj.keys[evt.key] = true
-
+//   mouseObj.keys[evt.key] = true;
 
 //   if (evt.key === 'Delete') {
-
-//     console.log('delete selected')
-//     deleteSelected()
-//   } else if (evt.key === 'v' && evt.ctrlKey) {
-//     ipcRenderer.send('handle-paste')
-//     console.log('Ctrl+V was pressed');
+//     console.log('delete selected');
+//     deleteSelected();
+//   } else if (evt.key === 'v' && (
+//       (process.platform === 'darwin' && evt.metaKey) || // Cmd+V on macOS
+//       (process.platform !== 'darwin' && evt.ctrlKey)    // Ctrl+V elsewhere
+//     )) {
+//     ipcRenderer.send('handle-paste');
+//     console.log('Paste shortcut was pressed');
 //   } else if (evt.key === ' ' && evt.ctrlKey) {
 //     mouseObj.ctrlSpace = true;
 //     console.log('Ctrl+space was pressed');
@@ -205,20 +206,44 @@ function loadState(loadedState, filePath) {
 //     mouseObj.space = true;
 //   }
 // });
-
-// --- custom code 11 ---
 document.addEventListener('keydown', evt => {
   mouseObj.keys[evt.key] = true;
+
+  const isMac = process.platform === 'darwin';
 
   if (evt.key === 'Delete') {
     console.log('delete selected');
     deleteSelected();
   } else if (evt.key === 'v' && (
-      (process.platform === 'darwin' && evt.metaKey) || // Cmd+V on macOS
-      (process.platform !== 'darwin' && evt.ctrlKey)    // Ctrl+V elsewhere
+      (isMac && evt.metaKey) || (!isMac && evt.ctrlKey)
     )) {
+    evt.preventDefault();
     ipcRenderer.send('handle-paste');
     console.log('Paste shortcut was pressed');
+  } else if (evt.key === 'l' && (
+      (isMac && evt.metaKey) || (!isMac && evt.ctrlKey)
+    )) {
+    evt.preventDefault();
+    ipcRenderer.send('trigger-load-dialog');
+    console.log('Load shortcut was pressed');
+  } else if (evt.key === 's' && (
+      (isMac && evt.metaKey) || (!isMac && evt.ctrlKey)
+    )) {
+    evt.preventDefault();
+    ipcRenderer.send('trigger-save');
+    console.log('Save shortcut was pressed');
+  } else if (evt.key === 'n' && (
+      (isMac && evt.metaKey) || (!isMac && evt.ctrlKey)
+    )) {
+    evt.preventDefault();
+    ipcRenderer.send('trigger-new-scene');
+    console.log('New Scene shortcut was pressed');
+  } else if (evt.key === 'w' && (
+      (isMac && evt.metaKey) || (!isMac && evt.ctrlKey)
+    )) {
+    evt.preventDefault();
+    ipcRenderer.send('trigger-close-scene');
+    console.log('Close Scene shortcut was pressed');
   } else if (evt.key === ' ' && evt.ctrlKey) {
     mouseObj.ctrlSpace = true;
     console.log('Ctrl+space was pressed');
@@ -226,6 +251,7 @@ document.addEventListener('keydown', evt => {
     mouseObj.space = true;
   }
 });
+
 
 // --- end of custom code 11 ---
 

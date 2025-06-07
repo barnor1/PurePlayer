@@ -74,7 +74,7 @@ app.whenReady().then(() => {
     // label: 'Paste',
     // accelerator: process.platform === 'darwin' ? 'Cmd+V' : 'Ctrl+V',
     // click: (menuItem, browserWindow, event) => {
-      
+
     id: "paste", label: 'Paste', visible: true,
     accelerator: process.platform === 'darwin' ? 'Cmd+V' : 'Ctrl+V',
     click: () => {
@@ -91,7 +91,7 @@ app.whenReady().then(() => {
       mainWin.setAlwaysOnTop(menuItem.checked);
     }
   }));
-  
+
   globalShortcut.register('Control+Shift+I', () => {
     mainWin.webContents.openDevTools()
   });
@@ -181,6 +181,53 @@ app.whenReady().then(() => {
     });
   }
 
+  // --- custom code 14---
+  function openSavedialog() {
+          dialog.showSaveDialog({
+        defaultPath: 'scene.purgif',
+        filters: [
+          { name: 'PurRef Gif Scene', extensions: ['purgif'] }
+        ]
+      }).then(result => {
+        console.log(result.canceled)
+        console.log(result.filePath)
+        if (!result.canceled) {
+          mainWin.webContents.send('save-scene', result.filePath)
+          addToRecent(result.filePath)
+        }
+      }).catch(err => {
+        console.log(err)
+      })
+  }
+
+  function openFiledialog() {
+    dialog.showOpenDialog({
+    properties: ['openFile'],
+    // filters: [
+    //   { name: 'PurRef Gif Scene', extensions: ['purgif'] }
+    // ]
+    filters: [
+      { name: 'All Supported Files', extensions: ['purgif', 'mp4', 'gif', 'png', 'jpg', 'jpeg', 'pdf', 'txt'] },
+      { name: 'PurRef Gif Scene', extensions: ['purgif'] },
+      { name: 'MP4 Videos', extensions: ['mp4'] },
+      { name: 'GIF Files', extensions: ['gif'] },
+      { name: 'PNG Images', extensions: ['png'] },
+      { name: 'JPEG Images', extensions: ['jpg', 'jpeg'] },
+      { name: 'PDF Documents', extensions: ['pdf'] },
+      { name: 'Text Files', extensions: ['txt'] }
+    ]
+  }).then(result => {
+    console.log(result.canceled)
+    console.log("result.filePaths", result.filePaths)
+    if (!result.canceled) {
+      readAndLoadFilePath(result.filePaths[0])
+    }
+  }).catch(err => {
+    console.log(err)
+  })
+  }
+  // --- end of custom code 14 ---
+
   contextMenu.append(new MenuItem({
     label: "Recent", type: 'submenu',
     submenu: recentSubmenu
@@ -197,7 +244,7 @@ app.whenReady().then(() => {
     ///TODO: add fuctionality maximizing a window
     click: (menuItem, browserWindow, event) => {
       console.log("max window");
-      if(!browserWindow.isMaximized())
+      if (!browserWindow.isMaximized())
         browserWindow.maximize();
       else
         browserWindow.unmaximize();
@@ -209,146 +256,122 @@ app.whenReady().then(() => {
     ///TODO: add fuctionality for minimizing a window
     click: (menuItem, browserWindow, event) => {
       console.log("max window");
-      if(!browserWindow.minimize())
+      if (!browserWindow.minimize())
         browserWindow.minimize();
     }
   }));
-//--- Custom code ---
-contextMenu.append(new MenuItem({
-  label: "Video Settings", type: 'submenu',
-  submenu: playerSubmenu
-}));
+  //--- Custom code ---
+  contextMenu.append(new MenuItem({
+    label: "Video Settings", type: 'submenu',
+    submenu: playerSubmenu
+  }));
 
-playerSubmenu.append(new MenuItem({
-  id: "toggle-video", label: 'Toggle Player', visible: true,
-  accelerator: 'Space',
-  // click: (menuItem, browserWindow, event) => {
+  playerSubmenu.append(new MenuItem({
+    id: "toggle-video", label: 'Toggle Player', visible: true,
+    accelerator: 'Space',
+    // click: (menuItem, browserWindow, event) => {
     click: () => {
-    console.log('Sending toggle/play/pause video to video ID:', selectedVideoId);
-       // mainWin.webContents.send('toggle-video')
-    if (selectedVideoId) {
-      mainWin.webContents.send('toggle-video', {
-        id: selectedVideoId
-      });
+      console.log('Sending toggle/play/pause video to video ID:', selectedVideoId);
+      // mainWin.webContents.send('toggle-video')
+      if (selectedVideoId) {
+        mainWin.webContents.send('toggle-video', {
+          id: selectedVideoId
+        });
+      }
     }
-  }
-}));
+  }));
 
-playerSubmenu.append(new MenuItem({
-  id: "rewind-video", label: 'Rewind 10s', visible: true,
-  accelerator: 'Left',
-  // click: (menuItem, browserWindow, event) => {
+  playerSubmenu.append(new MenuItem({
+    id: "rewind-video", label: 'Rewind 10s', visible: true,
+    accelerator: 'Left',
+    // click: (menuItem, browserWindow, event) => {
     click: () => {
-    console.log('Sending rewind video to video ID:', selectedVideoId);
-    //mainWin.webContents.send('rewind-video')
-    if (selectedVideoId) {
-      mainWin.webContents.send('rewind-video', {
-        id: selectedVideoId
-      });
+      console.log('Sending rewind video to video ID:', selectedVideoId);
+      //mainWin.webContents.send('rewind-video')
+      if (selectedVideoId) {
+        mainWin.webContents.send('rewind-video', {
+          id: selectedVideoId
+        });
+      }
     }
-  }
-}));
+  }));
 
-playerSubmenu.append(new MenuItem({
-  id: "forward-video", label: 'Forward 10s', visible: true,
-  accelerator: 'Right',
-  // click: (menuItem, browserWindow, event) => {
+  playerSubmenu.append(new MenuItem({
+    id: "forward-video", label: 'Forward 10s', visible: true,
+    accelerator: 'Right',
+    // click: (menuItem, browserWindow, event) => {
     click: () => {
-    console.log('Sending foward video to video ID:', selectedVideoId);
-    //mainWin.webContents.send('forward-video')
-    if (selectedVideoId) {
-      mainWin.webContents.send('forward-video', {
-        id: selectedVideoId
-      });
+      console.log('Sending foward video to video ID:', selectedVideoId);
+      //mainWin.webContents.send('forward-video')
+      if (selectedVideoId) {
+        mainWin.webContents.send('forward-video', {
+          id: selectedVideoId
+        });
+      }
     }
-  }
-}));
+  }));
 
-playerSubmenu.append(new MenuItem({
-  id: "mute-unmute", label: 'Mute/Unmute', visible: true,
-  accelerator: process.platform === 'darwin' ? 'Cmd+X' : 'Ctrl+X',
-  // click: (menuItem, browserWindow, event) => {
+  playerSubmenu.append(new MenuItem({
+    id: "mute-unmute", label: 'Mute/Unmute', visible: true,
+    accelerator: process.platform === 'darwin' ? 'Cmd+X' : 'Ctrl+X',
+    // click: (menuItem, browserWindow, event) => {
     click: () => {
-    // console.log('muting/unmuting');
-    // mainWin.webContents.send('mute-unmute')
-    console.log('Sending mute/unmute to video ID:', selectedVideoId);
-    if (selectedVideoId) {
-      mainWin.webContents.send('mute-unmute', {
-        id: selectedVideoId
-      });
+      // console.log('muting/unmuting');
+      // mainWin.webContents.send('mute-unmute')
+      console.log('Sending mute/unmute to video ID:', selectedVideoId);
+      if (selectedVideoId) {
+        mainWin.webContents.send('mute-unmute', {
+          id: selectedVideoId
+        });
+      }
     }
-  }
-}));
+  }));
 
-playerSubmenu.append(new MenuItem({
-  id: "volume-up", label: 'Volume Up', visible: true,
-  accelerator: 'Up',
-  // click: (menuItem, browserWindow, event) => {
+  playerSubmenu.append(new MenuItem({
+    id: "volume-up", label: 'Volume Up', visible: true,
+    accelerator: 'Up',
+    // click: (menuItem, browserWindow, event) => {
     click: () => {
-    console.log('Sending volume up to video ID:', selectedVideoId);
-    if (selectedVideoId) {
-      mainWin.webContents.send('volume-up', {
-        id: selectedVideoId
-      });
+      console.log('Sending volume up to video ID:', selectedVideoId);
+      if (selectedVideoId) {
+        mainWin.webContents.send('volume-up', {
+          id: selectedVideoId
+        });
+      }
     }
-  }
-}));
+  }));
 
-playerSubmenu.append(new MenuItem({
-  id: "volume-down", label: 'Volume Down', visible: true,
-  accelerator: 'Down',
-   // click: (menuItem, browserWindow, event) => {
+  playerSubmenu.append(new MenuItem({
+    id: "volume-down", label: 'Volume Down', visible: true,
+    accelerator: 'Down',
+    // click: (menuItem, browserWindow, event) => {
     click: () => {
-    console.log('Sending volume down to video ID:', selectedVideoId);
-    // mainWin.webContents.send('volume-down')
-    if (selectedVideoId) {
-      mainWin.webContents.send('volume-down', {
-        id: selectedVideoId
+      console.log('Sending volume down to video ID:', selectedVideoId);
+      // mainWin.webContents.send('volume-down')
+      if (selectedVideoId) {
+        mainWin.webContents.send('volume-down', {
+          id: selectedVideoId
 
-      });
+        });
+      }
     }
-  }
-}));
-// --- end custom code ---
+  }));
+  // --- end custom code ---
   contextMenu.append(new MenuItem({
     label: 'Load',
     accelerator: process.platform === 'darwin' ? 'Cmd+L' : 'Ctrl+L',
     click: (menuItem, browserWindow, event) => {
-      dialog.showOpenDialog({
-        properties: ['openFile'],
-        filters: [
-          { name: 'PurRef Gif Scene', extensions: ['purgif'] }
-        ]
-      }).then(result => {
-        console.log(result.canceled)
-        console.log("result.filePaths", result.filePaths)
-        if (!result.canceled) {
-          readAndLoadFilePath(result.filePaths[0])
-        }
-      }).catch(err => {
-        console.log(err)
-      })
+      openFiledialog();
+
     }
   }));
   contextMenu.append(new MenuItem({
     label: 'Save',
     accelerator: process.platform === 'darwin' ? 'Cmd+S' : 'Ctrl+S',
     click: (menuItem, browserWindow, event) => {
-      dialog.showSaveDialog({
-        defaultPath: 'scene.purgif',
-        filters: [
-          { name: 'PurRef Gif Scene', extensions: ['purgif'] }
-        ]
-      }).then(result => {
-        console.log(result.canceled)
-        console.log(result.filePath)
-        if (!result.canceled) {
-          mainWin.webContents.send('save-scene', result.filePath)
-          addToRecent(result.filePath)
-        }
-      }).catch(err => {
-        console.log(err)
-      })
+
+       openSavedialog();
+
     }
   }));
   contextMenu.append(new MenuItem({
@@ -363,6 +386,7 @@ playerSubmenu.append(new MenuItem({
     accelerator: process.platform === 'darwin' ? 'Cmd+W' : 'Ctrl+W',
     click: (menuItem, browserWindow, event) => {
       browserWindow.close();
+      app.quit();
     }
   }));
 
@@ -370,7 +394,7 @@ playerSubmenu.append(new MenuItem({
 
   if (process.argv.indexOf("debug") > -1)
     mainWin.webContents.openDevTools()
-  
+
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
       createWindow()
@@ -407,35 +431,35 @@ playerSubmenu.append(new MenuItem({
   //     video.paused ? video.play() : video.pause()
   //   }
   // });
-  
+
   // ipcMain.on('rewind-video', (event, menuType) => {
   //   const video = document.querySelector('video')
   //   if (video) {
   //     video.currentTime = Math.max(0, video.currentTime - 10)
   //   }
   // });
-  
+
   // ipcMain.on('forward-video', (event, menuType) => {
   //   const video = document.querySelector('video')
   //   if (video) {
   //     video.currentTime = Math.min(video.duration, video.currentTime + 10)
   //   }
   // });
-  
+
   // ipcMain.on('mute-unmute', (event, menuType) => {
   //   const video = document.querySelector('video')
   //   if (video) {
   //     video.muted = !video.muted
   //   }
   // });
-  
+
   // ipcMain.on('volume-up', (event, menuType) => {
   //   const video = document.querySelector('video')
   //   if (video) {
   //     video.volume = Math.min(1, video.volume + 0.1)
   //   }
   // });
-  
+
   // ipcMain.on('volume-down', (event, menuType) => {
   //   const video = document.querySelector('video')
   //   if (video) {
@@ -448,12 +472,12 @@ playerSubmenu.append(new MenuItem({
 
   ipcMain.on('video-selected', (event, videoId) => {
     console.log(`Renderer selected video with ID: ${videoId}`);
-  
 
-  // Store, manipulate, or respond back to renderer
-  // You can later use this ID to target a specific video
-  selectedVideoId = videoId;
-});
+
+    // Store, manipulate, or respond back to renderer
+    // You can later use this ID to target a specific video
+    selectedVideoId = videoId;
+  });
   // --- end of custom code ---
 
   ipcMain.on('save-scene', (event, filePath, stateCopy) => {
@@ -472,6 +496,30 @@ playerSubmenu.append(new MenuItem({
   ipcMain.on('loaded-state', (event, filePath) => {
     addToRecent(filePath)
   })
+
+  //  --- custom code 12 ---
+  ipcMain.on('trigger-load-dialog', () => {
+    /* open file dialog */
+    openFiledialog();
+
+  });
+
+  ipcMain.on('trigger-save', () => {
+    /* save logic */
+    openSavedialog();
+  });
+
+  ipcMain.on('trigger-new-scene', () => { 
+    /* reset or new scene logic */
+    mainWin.webContents.send('new-scene');
+   });
+
+  ipcMain.on('trigger-close-scene', () => { /* close or cleanup logic */
+    app.quit();
+  });
+  // --- end of custom code 12---
+
+
   ipcMain.on('record-window-size', (event, w, h) => {
     width = mainWin.getSize()[0]
     height = mainWin.getSize()[1]
@@ -489,13 +537,13 @@ playerSubmenu.append(new MenuItem({
     //win.setSize(width, height)
     //mainWin.setPosition(Math.round(x / 1.25) - Math.round(initPos.x / 1.25), Math.round(y / 1.25) - Math.round(initPos.y / 1.25))
   })
-  let loopToLoad = function loopToLoad(){
-    if(windowIsReady){
+  let loopToLoad = function loopToLoad() {
+    if (windowIsReady) {
       console.log("loadMostRecent")
       //setTimeout(loadMostRecent, 700)
       //loadMostRecent()
     }
-    else{
+    else {
       console.log("not ready")
       setTimeout(loopToLoad, 100)
     }
