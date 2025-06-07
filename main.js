@@ -266,6 +266,21 @@ function readAndLoadFilePath(filePath) {
     submenu: recentSubmenu
   }));
   populateRecent()
+
+function addClearRecentsItem() {
+  recentSubmenu.append(new MenuItem({
+    label: "Clear Recents",
+    click: () => {
+      store.set('recent', JSON.stringify([]))
+      recentSubmenu.clear()
+      addClearRecentsItem()
+    }
+  }))
+}
+
+addClearRecentsItem()
+
+
   contextMenu.append(new MenuItem({
     label: "Window", type: 'submenu',
     submenu: windowSubmenu
