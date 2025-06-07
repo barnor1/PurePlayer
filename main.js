@@ -173,13 +173,46 @@ app.whenReady().then(() => {
 
   contextMenu.append(new MenuItem({ type: 'separator' }))
 
-  function readAndLoadFilePath(filePath) {
+  // function readAndLoadFilePath(filePath) {
+  //   fs.readFile(filePath, (err, data) => {
+  //     if (err) throw err;
+  //     let newState = JSON.parse(data);
+  //     mainWin.webContents.send('load-scene', newState, filePath)
+  //   });
+  // }
+// --- custom code 15 ---
+const mimeTypes = {
+  '.gif': 'image/gif',
+  '.mp4': 'video/mp4',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.pdf': 'application/pdf',
+  '.txt': 'text/plain'
+};
+
+function readAndLoadFilePath(filePath) {
+  const ext = path.extname(filePath).toLowerCase();
+
+  // Handle .purgif (JSON format)
+  if (ext === '.purgif') {
     fs.readFile(filePath, (err, data) => {
       if (err) throw err;
-      let newState = JSON.parse(data);
-      mainWin.webContents.send('load-scene', newState, filePath)
+
+      try {
+        let newState = JSON.parse(data);
+        mainWin.webContents.send('load-scene', newState, filePath);
+      } catch (e) {
+        console.error("Failed to parse .purgif as JSON:", e.message);
+      }
     });
+  } else {
+    const type = mimeTypes[ext] || 'unknown';
+    // All other file types: treat as direct media (gif, mp4, etc.)
+    mainWin.webContents.send('load-file-direct', { filePath, type });
   }
+}
+// --- end of custom code 15---
 
   // --- custom code 14---
   function openSavedialog() {

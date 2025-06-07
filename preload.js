@@ -423,48 +423,6 @@ ipcRenderer.on('clipboard', (event, msg) => {
     addMediaWithPath(payload[payload.type], payload.type)
 })
 //  --- custom code ---
-// Utility function to get the currently selected video
-// function getActiveVideo() {
-//   return document.querySelector('video.selectedItem'); // or whichever way you mark selected video
-// }
-
-// -------------
-// Respond to main process commands
-// window.electronAPI.on('control-video', (event, { id, action }) => {
-//   const video = document.getElementById(id) || getActiveVideo();
-//   if (!video) return;
-
-//   switch (action) {
-//     // case 'play':
-//     //   video.play();
-//     //   break;
-//     // case 'pause':
-//     //   video.pause();
-//     //   break;
-//     case 'toggle-video':
-//       video.paused ? video.play() : video.pause()
-//       break;
-//     case 'mute':
-//       video.muted = true;
-//       break;
-//     case 'unmute':
-//       video.muted = false;
-//       break;
-//     case 'volume-up':
-//       video.volume = Math.min(1, video.volume + 0.1);
-//       break;
-//     case 'volume-down':
-//       video.volume = Math.max(0, video.volume - 0.1);
-//       break;
-//     case 'rewind':
-//       video.currentTime = Math.max(0, video.currentTime - 10);
-//       break;
-//     case 'forward':
-//       video.currentTime = Math.min(video.duration, video.currentTime + 10);
-//       break;
-//   }
-// });
-
 
 ipcRenderer.on('toggle-video', (event, data) => {
   const videoId = data?.id;
@@ -524,6 +482,11 @@ ipcRenderer.on('volume-down', (event, data) => {
   if (video && video.tagName.toLowerCase() === 'video') {
     video.volume = Math.max(0, video.volume - 0.1);
   }
+});
+
+// --- 16 ---
+ipcRenderer.on('load-file-direct', (event, { filePath, type }) => {
+  addMediaWithPath(filePath, type);
 });
 
 // end of custom code ---
