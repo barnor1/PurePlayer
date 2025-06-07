@@ -187,17 +187,38 @@ function loadState(loadedState, filePath) {
   }, 1000);
 }
 
-document.addEventListener('keydown', evt => {
-  mouseObj.keys[evt.key] = true
+// document.addEventListener('keydown', evt => {
+//   mouseObj.keys[evt.key] = true
 
+
+//   if (evt.key === 'Delete') {
+
+//     console.log('delete selected')
+//     deleteSelected()
+//   } else if (evt.key === 'v' && evt.ctrlKey) {
+//     ipcRenderer.send('handle-paste')
+//     console.log('Ctrl+V was pressed');
+//   } else if (evt.key === ' ' && evt.ctrlKey) {
+//     mouseObj.ctrlSpace = true;
+//     console.log('Ctrl+space was pressed');
+//   } else if (evt.key === ' ') {
+//     mouseObj.space = true;
+//   }
+// });
+
+// --- custom code 11 ---
+document.addEventListener('keydown', evt => {
+  mouseObj.keys[evt.key] = true;
 
   if (evt.key === 'Delete') {
-
-    console.log('delete selected')
-    deleteSelected()
-  } else if (evt.key === 'v' && evt.ctrlKey) {
-    ipcRenderer.send('handle-paste')
-    console.log('Ctrl+V was pressed');
+    console.log('delete selected');
+    deleteSelected();
+  } else if (evt.key === 'v' && (
+      (process.platform === 'darwin' && evt.metaKey) || // Cmd+V on macOS
+      (process.platform !== 'darwin' && evt.ctrlKey)    // Ctrl+V elsewhere
+    )) {
+    ipcRenderer.send('handle-paste');
+    console.log('Paste shortcut was pressed');
   } else if (evt.key === ' ' && evt.ctrlKey) {
     mouseObj.ctrlSpace = true;
     console.log('Ctrl+space was pressed');
@@ -205,6 +226,8 @@ document.addEventListener('keydown', evt => {
     mouseObj.space = true;
   }
 });
+
+// --- end of custom code 11 ---
 
 document.addEventListener('keyup', evt => {
   mouseObj.keys[evt.key] = false

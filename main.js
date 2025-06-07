@@ -71,9 +71,13 @@ app.whenReady().then(() => {
     }
   }));
   contextMenu.append(new MenuItem({
-    label: 'Paste',
+    // label: 'Paste',
+    // accelerator: process.platform === 'darwin' ? 'Cmd+V' : 'Ctrl+V',
+    // click: (menuItem, browserWindow, event) => {
+      
+    id: "paste", label: 'Paste', visible: true,
     accelerator: process.platform === 'darwin' ? 'Cmd+V' : 'Ctrl+V',
-    click: (menuItem, browserWindow, event) => {
+    click: () => {
       console.log('click paste')
 
       handlePaste();
