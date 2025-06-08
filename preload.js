@@ -215,32 +215,32 @@ document.addEventListener('keydown', evt => {
     console.log('delete selected');
     deleteSelected();
   } else if (evt.key === 'v' && (
-      (isMac && evt.metaKey) || (!isMac && evt.ctrlKey)
-    )) {
+    (isMac && evt.metaKey) || (!isMac && evt.ctrlKey)
+  )) {
     evt.preventDefault();
     ipcRenderer.send('handle-paste');
     console.log('Paste shortcut was pressed');
   } else if (evt.key === 'l' && (
-      (isMac && evt.metaKey) || (!isMac && evt.ctrlKey)
-    )) {
+    (isMac && evt.metaKey) || (!isMac && evt.ctrlKey)
+  )) {
     evt.preventDefault();
     ipcRenderer.send('trigger-load-dialog');
     console.log('Load shortcut was pressed');
   } else if (evt.key === 's' && (
-      (isMac && evt.metaKey) || (!isMac && evt.ctrlKey)
-    )) {
+    (isMac && evt.metaKey) || (!isMac && evt.ctrlKey)
+  )) {
     evt.preventDefault();
     ipcRenderer.send('trigger-save');
     console.log('Save shortcut was pressed');
   } else if (evt.key === 'n' && (
-      (isMac && evt.metaKey) || (!isMac && evt.ctrlKey)
-    )) {
+    (isMac && evt.metaKey) || (!isMac && evt.ctrlKey)
+  )) {
     evt.preventDefault();
     ipcRenderer.send('trigger-new-scene');
     console.log('New Scene shortcut was pressed');
   } else if (evt.key === 'w' && (
-      (isMac && evt.metaKey) || (!isMac && evt.ctrlKey)
-    )) {
+    (isMac && evt.metaKey) || (!isMac && evt.ctrlKey)
+  )) {
     evt.preventDefault();
     ipcRenderer.send('trigger-close-scene');
     console.log('Close Scene shortcut was pressed');
@@ -270,7 +270,7 @@ document.addEventListener('keyup', evt => {
 
 function getSelected() {
   if (document.querySelector('.editVideo')) return { type: 'edit-video' }
-  
+
   let lastIndex = state.elements.length - 1
   if (!state.elements[lastIndex] || !state.elements[lastIndex].element.classList.contains('selectedItem')) return null
 
@@ -424,65 +424,129 @@ ipcRenderer.on('clipboard', (event, msg) => {
 })
 //  --- custom code ---
 
+const youtubePlayers = {}; // optional, for legacy tracking if needed
+
 ipcRenderer.on('toggle-video', (event, data) => {
   const videoId = data?.id;
   if (!videoId) return;
 
-  const video = document.getElementById(videoId);
-  if (video && video.tagName.toLowerCase() === 'video') {
-    video.paused ? video.play() : video.pause();
+  const el = document.getElementById(videoId);
+  if (!el) return;
+
+  if (el.tagName.toLowerCase() === 'video') {
+    el.paused ? el.play() : el.pause();
+    return;
+  }
+
+  const yt = state.youtubePlayers?.[videoId];
+  if (yt && typeof yt.getPlayerState === 'function') {
+    const state = yt.getPlayerState();
+    if (state === YT.PlayerState.PAUSED || state === YT.PlayerState.ENDED) {
+      yt.playVideo();
+    } else if (state === YT.PlayerState.PLAYING) {
+      yt.pauseVideo();
+    }
+  }
+});
+
+ipcRenderer.on('mute-video', (event, data) => {
+  const videoId = data?.id;
+  if (!videoId) return;
+
+  const el = document.getElementById(videoId);
+  if (!el) return;
+
+  if (el.tagName.toLowerCase() === 'video') {
+    el.muted = true;
+  } else {
+    const yt = state.youtubePlayers?.[videoId];
+    if (yt && typeof yt.mute === 'function') yt.mute();
+  }
+});
+
+ipcRenderer.on('unmute-video', (event, data) => {
+  const videoId = data?.id;
+  if (!videoId) return;
+
+  const el = document.getElementById(videoId);
+  if (!el) return;
+
+  if (el.tagName.toLowerCase() === 'video') {
+    el.muted = false;
+  } else {
+    const yt = state.youtubePlayers?.[videoId];
+    if (yt && typeof yt.unMute === 'function') yt.unMute();
+  }
+});
+
+ipcRenderer.on('volume-video', (event, data) => {
+  const { id, volume } = data || {};
+  if (!id || volume == null) return;
+
+  const el = document.getElementById(id);
+  if (!el) return;
+
+  if (el.tagName.toLowerCase() === 'video') {
+    el.volume = volume; // 0.0 to 1.0
+  } else {
+    const yt = state.youtubePlayers?.[id];
+    if (yt && typeof yt.setVolume === 'function') yt.setVolume(volume * 100); // YouTube uses 0–100
   }
 });
 
 ipcRenderer.on('rewind-video', (event, data) => {
-  const videoId = data?.id;
-  if (!videoId) return;
+  const { id, seconds } = data || {};
+  if (!id || seconds == null) return;
 
-  const video = document.getElementById(videoId);
-  if (video && video.tagName.toLowerCase() === 'video') {
-    video.currentTime = Math.max(0, video.currentTime - 10);
+  const el = document.getElementById(id);
+  if (!el) return;
+
+  if (el.tagName.toLowerCase() === 'video') {
+    el.currentTime = Math.max(el.currentTime - seconds, 0);
+  } else {
+    const yt = state.youtubePlayers?.[id];
+    if (yt && typeof yt.seekTo === 'function') {
+      const currentTime = yt.getCurrentTime();
+      yt.seekTo(Math.max(currentTime - seconds, 0), true);
+    }
   }
 });
 
 ipcRenderer.on('forward-video', (event, data) => {
-  const videoId = data?.id;
-  if (!videoId) return;
+  const { id, seconds } = data || {};
+  if (!id || seconds == null) return;
 
-  const video = document.getElementById(videoId);
-  if (video && video.tagName.toLowerCase() === 'video') {
-    video.currentTime = Math.min(video.duration, video.currentTime + 10);
+  const el = document.getElementById(id);
+  if (!el) return;
+
+  if (el.tagName.toLowerCase() === 'video') {
+    el.currentTime = Math.min(el.currentTime + seconds, el.duration);
+  } else {
+    const yt = state.youtubePlayers?.[id];
+    if (yt && typeof yt.seekTo === 'function') {
+      const currentTime = yt.getCurrentTime();
+      yt.seekTo(currentTime + seconds, true);
+    }
   }
 });
 
-ipcRenderer.on('mute-unmute', (event, data) => {
-  const videoId = data?.id;
-  if (!videoId) return;
+ipcRenderer.on('seek-video', (event, data) => {
+  const { id, time } = data || {};
+  if (!id || time == null) return;
 
-  const video = document.getElementById(videoId);
-  if (video && video.tagName.toLowerCase() === 'video') {
-    video.muted = !video.muted;
+  const el = document.getElementById(id);
+  if (!el) return;
+
+  if (el.tagName.toLowerCase() === 'video') {
+    el.currentTime = time;
+  } else {
+    const yt = state.youtubePlayers?.[id];
+    if (yt && typeof yt.seekTo === 'function') yt.seekTo(time, true);
   }
 });
 
-ipcRenderer.on('volume-up', (event, data) => {
-  const videoId = data?.id;
-  if (!videoId) return;
 
-  const video = document.getElementById(videoId);
-  if (video && video.tagName.toLowerCase() === 'video') {
-    video.volume = Math.min(1, video.volume + 0.1);
-  }
-});
 
-ipcRenderer.on('volume-down', (event, data) => {
-  const videoId = data?.id;
-  if (!videoId) return;
-
-  const video = document.getElementById(videoId);
-  if (video && video.tagName.toLowerCase() === 'video') {
-    video.volume = Math.max(0, video.volume - 0.1);
-  }
-});
 
 // --- 16 ---
 ipcRenderer.on('load-file-direct', (event, { filePath, type }) => {
@@ -597,7 +661,7 @@ function addMediaWithPath(path, type = 'img', loadedState) {
       mediaElement.style.width = newWidth + "px";
       mediaElement.style.height = newHeight + "px";
       */
-      
+
       const { width: newWidth, height: newHeight } = adjustFontSize2(mediaElement, path)
       loadedState.x = centerWin.centerX - (newWidth / state.currentScale / 2)
       loadedState.y = centerWin.centerY - (newHeight / state.currentScale / 2)
@@ -813,18 +877,18 @@ interact('.draggable')
     var target = event.target
 
     // ---custom code 3 --
-  //    const target = event.target;
+    //    const target = event.target;
 
-  // if (target.tagName === 'VIDEO') {
-  //   // Assign a unique ID if it doesn't have one
-  //   if (!target.dataset.vid) {
-  //     const uniqueId = 'video_' + Date.now();
-  //     target.dataset.vid = uniqueId;
-  //     target.id = uniqueId;
-  //   }
+    // if (target.tagName === 'VIDEO') {
+    //   // Assign a unique ID if it doesn't have one
+    //   if (!target.dataset.vid) {
+    //     const uniqueId = 'video_' + Date.now();
+    //     target.dataset.vid = uniqueId;
+    //     target.id = uniqueId;
+    //   }
 
-  //   ipcRenderer.send('video-selected', target.dataset.vid);
-  // }
+    //   ipcRenderer.send('video-selected', target.dataset.vid);
+    // }
     //end of custom code 3 ---
     handleSelected(target)
     //
@@ -936,18 +1000,25 @@ function handleSelected(target, dragging = false) {
     }
   }
   // --- custom code 7 ---
-    // 👇 Video-specific logic
-    if (target.tagName.toLowerCase() === 'video' || target.tagName.toLowerCase() ===  'youtube') {
-    // if (target.tagName.toLowerCase() === 'video' ) {
-    if (!target.id) {
-      target.id = `video-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-    }
+  // 👇 Video-specific logic
 
-    // Send video ID to main process
-    console.log('Sending selected video ID to main:', target.id);
-    ipcRenderer.send('video-selected', target.id);
+  const isVideo =
+    target.tagName.toLowerCase() === 'video' ||
+    target.classList.contains('youtubePlayer') ||
+    target.closest('.youtubePlayer, video');
+
+  if (isVideo) {
+    // Ensure the actual video or wrapper element gets the ID
+    const idTarget = target.closest('.youtubePlayer, video');
+
+    if (idTarget && !idTarget.id) {
+      idTarget.id = `video-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    }
+    console.log('Sending selected video ID to main:', idTarget.id);
+    ipcRenderer.send('video-selected', idTarget.id);
   }
   // --- end of custom code 7 ---
+
 }
 
 function dragMoveListener(event) {

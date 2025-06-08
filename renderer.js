@@ -157,30 +157,57 @@ const callback = function (mutationsList, observer) {
 const observer = new MutationObserver(callback);
 observer.observe(targetNode, config);
 
+const youtubePlayers = {}; // Global map
+
 function embedYoutubeVideo() {
-    const playerNeedsSetup = document.querySelector('.playerNeedsSetup');
-    if (!playerNeedsSetup) {
-        console.error('embedYoutubeVideo called without player div to setup');
-        return;
-    }
+  const playerNeedsSetup = document.querySelector('.playerNeedsSetup');
+  if (!playerNeedsSetup) {
+    console.error('embedYoutubeVideo called without player div to setup');
+    return;
+  }
 
-    playerNeedsSetup.classList.remove('playerNeedsSetup');
-    const iframediv = playerNeedsSetup.querySelector('.iframeDiv');
-    const code = playerNeedsSetup.dataset.idcode;
+  playerNeedsSetup.classList.remove('playerNeedsSetup');
 
-    player = new YT.Player(iframediv, {
-        videoId: code,
-        playerVars: {
-            controls: 1,     // ✅ Show YouTube controls
-            disablekb: 1,    // ✅ Allow keyboard control
-            enablejsapi: 1,
-            fs: 0,
-            loop: 1,
-            modestbranding: 1,
-        },
-        events: {
-            'onReady': onPlayerReady,
-            'onStateChange': onPlayerStateChange
+  // ✅ Ensure wrapper has a unique ID — used for IPC and player lookup
+  if (!playerNeedsSetup.id) {
+    playerNeedsSetup.id = `video-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+  }
+
+  // ✅ Also ensure it has the class used in selection logic
+  playerNeedsSetup.classList.add('youtubePlayer');
+
+  const wrapperId = playerNeedsSetup.id;
+  const iframediv = playerNeedsSetup.querySelector('.iframeDiv');
+  const code = playerNeedsSetup.dataset.idcode;
+
+  const ytPlayer = new YT.Player(iframediv, {
+    videoId: code,
+    playerVars: {
+      controls: 1,
+      disablekb: 1,
+      enablejsapi: 1,
+      fs: 0,
+      loop: 1,
+      modestbranding: 1,
+    },
+    events: {
+      onReady: (event) => {
+        onPlayerReady(event);
+
+        // ✅ Double-check the wrapper still has the same ID
+        const wrapper = event.target.getIframe().parentElement;
+        if (!wrapper.id) {
+          wrapper.id = wrapperId;
         }
-    });
+
+        // ✅ Register the player instance under that ID
+        state.youtubePlayers = state.youtubePlayers || {};
+        state.youtubePlayers[wrapper.id] = event.target;
+
+        console.log('✅ Registered YouTube player with ID:', wrapper.id);
+        console.log('📦 Current YouTube players:', state.youtubePlayers);
+      },
+      onStateChange: onPlayerStateChange,
+    },
+  });
 }
