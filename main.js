@@ -600,6 +600,10 @@ addClearRecentsItem()
 })
 
 let windowIsReady = false;
+app.on('will-quit', () => {
+    globalShortcut.unregisterAll();
+});
+
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit()
