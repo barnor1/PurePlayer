@@ -1,5 +1,5 @@
 # Why?
-This is a remake/clone of animRef which is a remake/clone of pureRef, a program that allows you to view images on top of other windows. This is useful for artists who want to reference images while drawing, or for people who want to view images while playing games. Where AnimRef differs is it adds gif, video, and youtube support. The movement of a video for a reference offers a lot of information like depth and scale that a still image can't. This is one of the key parts of what make in person figure drawing so important. It also seems like pureref has no intention of ever adding this feature. 
+This is a remake/clone of animRef which is a remake/clone of pureRef, a program that allows you to view images on top of other windows. This is useful for artists who want to reference images while drawing, or for people who want to view images while playing games. Where AnimRef differs is it adds gif, video, and youtube (no audio or controls for youtube videos). support. The movement of a video for a reference offers a lot of information like depth and scale that a still image can't. This is one of the key parts of what make in person figure drawing so important. It also seems like pureref has no intention of ever adding this feature. 
 
 🚀 You should still support [PureRef](https://www.pureref.com/) if you can! 🚀
 
@@ -21,6 +21,28 @@ Windows, Mac, and linux support(need testing on mac and linux; If you're on thes
    - Close - Ctrl+W
    - Maximize - Ctrl+F
    - Minimize - Ctrl+M
+     ### VideoSettings
+     - Toggle Player - Space
+     - Rewing - Left
+     - Forward - Right
+     - Mute/Unmunte - Ctrl+X
+     - Volume up - Up
+     - Volume down - Down
+
+   ## mac Shortcuts
+   - Load - Cmd+L
+   - Save - Cmd+S
+   - New Scene - Cmd+N
+   - Close - Cmd+W
+   - Maximize - Cmd+F
+   - Minimize - Cmd+M
+     ### VideoSettings
+     - Toggle Player - Space
+     - Rewing - Left
+     - Forward - Right
+     - Mute/Unmunte - Cmd+X
+     - Volume up - Up
+     - Volume down - Down
 ## Want to add/suggest more shortcuts?
 Use the contribution guide below and check out the issue here: https://github.com/lettucegoblin/AnimRef/issues/9
 # Contributing
