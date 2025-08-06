@@ -186,18 +186,64 @@ function loadState(loadedState, filePath) {
     ipcRenderer.send('loaded-state', filePath)
   }, 1000);
 }
+// --- custom code 11 ---
+// document.addEventListener('keydown', evt => {
+//   mouseObj.keys[evt.key] = true;
 
+//   if (evt.key === 'Delete') {
+//     console.log('delete selected');
+//     deleteSelected();
+//   } else if (evt.key === 'v' && (
+//       (process.platform === 'darwin' && evt.metaKey) || // Cmd+V on macOS
+//       (process.platform !== 'darwin' && evt.ctrlKey)    // Ctrl+V elsewhere
+//     )) {
+//     ipcRenderer.send('handle-paste');
+//     console.log('Paste shortcut was pressed');
+//   } else if (evt.key === ' ' && evt.ctrlKey) {
+//     mouseObj.ctrlSpace = true;
+//     console.log('Ctrl+space was pressed');
+//   } else if (evt.key === ' ') {
+//     mouseObj.space = true;
+//   }
+// });
 document.addEventListener('keydown', evt => {
-  mouseObj.keys[evt.key] = true
+  mouseObj.keys[evt.key] = true;
 
+  const isMac = process.platform === 'darwin';
 
   if (evt.key === 'Delete') {
-
-    console.log('delete selected')
-    deleteSelected()
-  } else if (evt.key === 'v' && evt.ctrlKey) {
-    ipcRenderer.send('handle-paste')
-    console.log('Ctrl+V was pressed');
+    console.log('delete selected');
+    deleteSelected();
+  } else if (evt.key === 'v' && (
+      (isMac && evt.metaKey) || (!isMac && evt.ctrlKey)
+    )) {
+    evt.preventDefault();
+    ipcRenderer.send('handle-paste');
+    console.log('Paste shortcut was pressed');
+  } else if (evt.key === 'l' && (
+      (isMac && evt.metaKey) || (!isMac && evt.ctrlKey)
+    )) {
+    evt.preventDefault();
+    ipcRenderer.send('trigger-load-dialog');
+    console.log('Load shortcut was pressed');
+  } else if (evt.key === 's' && (
+      (isMac && evt.metaKey) || (!isMac && evt.ctrlKey)
+    )) {
+    evt.preventDefault();
+    ipcRenderer.send('trigger-save');
+    console.log('Save shortcut was pressed');
+  } else if (evt.key === 'n' && (
+      (isMac && evt.metaKey) || (!isMac && evt.ctrlKey)
+    )) {
+    evt.preventDefault();
+    ipcRenderer.send('trigger-new-scene');
+    console.log('New Scene shortcut was pressed');
+  } else if (evt.key === 'w' && (
+      (isMac && evt.metaKey) || (!isMac && evt.ctrlKey)
+    )) {
+    evt.preventDefault();
+    ipcRenderer.send('trigger-close-scene');
+    console.log('Close Scene shortcut was pressed');
   } else if (evt.key === ' ' && evt.ctrlKey) {
     mouseObj.ctrlSpace = true;
     console.log('Ctrl+space was pressed');
@@ -205,6 +251,9 @@ document.addEventListener('keydown', evt => {
     mouseObj.space = true;
   }
 });
+
+
+// --- end of custom code 11 ---
 
 document.addEventListener('keyup', evt => {
   mouseObj.keys[evt.key] = false
@@ -221,6 +270,7 @@ document.addEventListener('keyup', evt => {
 
 function getSelected() {
   if (document.querySelector('.editVideo')) return { type: 'edit-video' }
+  
   let lastIndex = state.elements.length - 1
   if (!state.elements[lastIndex] || !state.elements[lastIndex].element.classList.contains('selectedItem')) return null
 
@@ -323,6 +373,26 @@ document.addEventListener('mouseup', (e) => {
     }
   }
 })
+// --- custom code 5 ---
+// document.addEventListener('click', (event) => {
+//   const target = event.target;
+
+//   if (target.tagName.toLowerCase() === 'video') {
+//     // Assign unique ID if it doesn't have one
+//     if (!target.id) {
+//       target.id = 'video-' + Date.now(); // or use UUID
+//     }
+
+//     // Mark it as selected (optional, for styling or logic)
+//     document.querySelectorAll('video').forEach(v => v.classList.remove('selectedItem'));
+//     target.classList.add('selectedItem');
+
+//     // Send ID to main process
+//     window.electronAPI.send('video-selected', target.id);
+//   }
+// });
+
+// --- end if custom code 5 ---
 ipcRenderer.on('close-edit-video', (event, newState) => {
   closeEditVideo()
 })
@@ -352,6 +422,74 @@ ipcRenderer.on('clipboard', (event, msg) => {
   } else
     addMediaWithPath(payload[payload.type], payload.type)
 })
+//  --- custom code ---
+
+ipcRenderer.on('toggle-video', (event, data) => {
+  const videoId = data?.id;
+  if (!videoId) return;
+
+  const video = document.getElementById(videoId);
+  if (video && video.tagName.toLowerCase() === 'video') {
+    video.paused ? video.play() : video.pause();
+  }
+});
+
+ipcRenderer.on('rewind-video', (event, data) => {
+  const videoId = data?.id;
+  if (!videoId) return;
+
+  const video = document.getElementById(videoId);
+  if (video && video.tagName.toLowerCase() === 'video') {
+    video.currentTime = Math.max(0, video.currentTime - 10);
+  }
+});
+
+ipcRenderer.on('forward-video', (event, data) => {
+  const videoId = data?.id;
+  if (!videoId) return;
+
+  const video = document.getElementById(videoId);
+  if (video && video.tagName.toLowerCase() === 'video') {
+    video.currentTime = Math.min(video.duration, video.currentTime + 10);
+  }
+});
+
+ipcRenderer.on('mute-unmute', (event, data) => {
+  const videoId = data?.id;
+  if (!videoId) return;
+
+  const video = document.getElementById(videoId);
+  if (video && video.tagName.toLowerCase() === 'video') {
+    video.muted = !video.muted;
+  }
+});
+
+ipcRenderer.on('volume-up', (event, data) => {
+  const videoId = data?.id;
+  if (!videoId) return;
+
+  const video = document.getElementById(videoId);
+  if (video && video.tagName.toLowerCase() === 'video') {
+    video.volume = Math.min(1, video.volume + 0.1);
+  }
+});
+
+ipcRenderer.on('volume-down', (event, data) => {
+  const videoId = data?.id;
+  if (!videoId) return;
+
+  const video = document.getElementById(videoId);
+  if (video && video.tagName.toLowerCase() === 'video') {
+    video.volume = Math.max(0, video.volume - 0.1);
+  }
+});
+
+// --- 16 ---
+ipcRenderer.on('load-file-direct', (event, { filePath, type }) => {
+  addMediaWithPath(filePath, type);
+});
+
+// end of custom code ---
 function getCenterOfWindowScaled() {
   const width = window.innerWidth;
   const height = window.innerHeight;
@@ -392,6 +530,9 @@ function addMediaWithPath(path, type = 'img', loadedState) {
     mediaElement.src = path;
   } else if (type == 'video') {
     mediaElement = document.createElement('video')
+    // --custom code 4 ---
+    // mediaElement.id =  'video-' + Date.now(); // or use a counter or UUID
+    // --- end of custom code 8 ---
     mediaElement.autoplay = true;
     mediaElement.loop = true;
     mediaElement.muted = true;
@@ -406,6 +547,10 @@ function addMediaWithPath(path, type = 'img', loadedState) {
       var code = extractYoutubeId(path)
       if (code == null) return;
       mediaElement = document.createElement('div')
+
+      // --custom code 4 ---
+      // mediaElement.id =  'video-' + Date.now(); // or use a counter or UUID
+      // --- end of custom code 8 ---
       mediaElement.classList.add('youtubePlayer')
       mediaElement.classList.add('playerNeedsSetup')
       mediaElement.dataset.idcode = code
@@ -667,6 +812,20 @@ interact('.draggable')
   }).on('tap', function (event) {
     var target = event.target
 
+    // ---custom code 3 --
+  //    const target = event.target;
+
+  // if (target.tagName === 'VIDEO') {
+  //   // Assign a unique ID if it doesn't have one
+  //   if (!target.dataset.vid) {
+  //     const uniqueId = 'video_' + Date.now();
+  //     target.dataset.vid = uniqueId;
+  //     target.id = uniqueId;
+  //   }
+
+  //   ipcRenderer.send('video-selected', target.dataset.vid);
+  // }
+    //end of custom code 3 ---
     handleSelected(target)
     //
     event.preventDefault()
@@ -721,6 +880,25 @@ interact('.selectedItem').resizable({
   handleSelected(target)
   //
   event.preventDefault()
+
+  // --- custom code 3 --
+  //  const target = event.target;
+
+  // if (target.tagName === 'VIDEO') {
+  //   // Assign a unique ID if it doesn't have one
+  //   if (!target.dataset.vid) {
+  //     const uniqueId = 'video_' + Date.now();
+  //     target.dataset.vid = uniqueId;
+  //     target.id = uniqueId;
+  //   }
+
+  //   ipcRenderer.send('video-selected', target.dataset.vid);
+  // }
+
+  // handleSelected(target);
+  // event.preventDefault();
+
+  //--- end of custom code 3 ---
 })
 
 function deleteSelected() {
@@ -757,6 +935,19 @@ function handleSelected(target, dragging = false) {
       state.elements[i].element.dataset.zIndex = i;
     }
   }
+  // --- custom code 7 ---
+    // 👇 Video-specific logic
+    if (target.tagName.toLowerCase() === 'video' || target.tagName.toLowerCase() ===  'youtube') {
+    // if (target.tagName.toLowerCase() === 'video' ) {
+    if (!target.id) {
+      target.id = `video-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    }
+
+    // Send video ID to main process
+    console.log('Sending selected video ID to main:', target.id);
+    ipcRenderer.send('video-selected', target.id);
+  }
+  // --- end of custom code 7 ---
 }
 
 function dragMoveListener(event) {

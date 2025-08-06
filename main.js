@@ -17,6 +17,7 @@ const store = new Store();
 //store.clear()
 
 //menu.append(new MenuItem({ label: 'Electron', type: 'checkbox', checked: true }))
+let selectedVideoId = null;
 
 let width = 400;
 let height = 300;
@@ -41,6 +42,7 @@ app.commandLine.appendSwitch('disable-site-isolation-trials');
 const contextMenu = new Menu()
 const recentSubmenu = new Menu()
 const windowSubmenu = new Menu()
+const playerSubmenu = new Menu()
 app.whenReady().then(() => {
   const mainWin = createWindow()
   mainWin.on('ready-to-show', () => {
@@ -69,9 +71,13 @@ app.whenReady().then(() => {
     }
   }));
   contextMenu.append(new MenuItem({
-    label: 'Paste',
+    // label: 'Paste',
+    // accelerator: process.platform === 'darwin' ? 'Cmd+V' : 'Ctrl+V',
+    // click: (menuItem, browserWindow, event) => {
+
+    id: "paste", label: 'Paste', visible: true,
     accelerator: process.platform === 'darwin' ? 'Cmd+V' : 'Ctrl+V',
-    click: (menuItem, browserWindow, event) => {
+    click: () => {
       console.log('click paste')
 
       handlePaste();
@@ -85,6 +91,7 @@ app.whenReady().then(() => {
       mainWin.setAlwaysOnTop(menuItem.checked);
     }
   }));
+
   globalShortcut.register('Control+Shift+I', () => {
     mainWin.webContents.openDevTools()
   });
@@ -166,70 +173,50 @@ app.whenReady().then(() => {
 
   contextMenu.append(new MenuItem({ type: 'separator' }))
 
-  function readAndLoadFilePath(filePath) {
+  // function readAndLoadFilePath(filePath) {
+  //   fs.readFile(filePath, (err, data) => {
+  //     if (err) throw err;
+  //     let newState = JSON.parse(data);
+  //     mainWin.webContents.send('load-scene', newState, filePath)
+  //   });
+  // }
+// --- custom code 15 ---
+const mimeTypes = {
+  '.gif': 'image/gif',
+  '.mp4': 'video/mp4',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.pdf': 'application/pdf',
+  '.txt': 'text/plain'
+};
+
+function readAndLoadFilePath(filePath) {
+  const ext = path.extname(filePath).toLowerCase();
+
+  // Handle .purgif (JSON format)
+  if (ext === '.purgif') {
     fs.readFile(filePath, (err, data) => {
       if (err) throw err;
-      let newState = JSON.parse(data);
-      mainWin.webContents.send('load-scene', newState, filePath)
-    });
-  }
 
-  contextMenu.append(new MenuItem({
-    label: "Recent", type: 'submenu',
-    submenu: recentSubmenu
-  }));
-  populateRecent()
-  contextMenu.append(new MenuItem({
-    label: "Window", type: 'submenu',
-    submenu: windowSubmenu
-  }));
-  windowSubmenu.append(new MenuItem({
-    label: "Maximize",
-    accelerator: process.platform === 'darwin' ? 'Cmd+F' : 'Ctrl+F',
-    ///TODO: add fuctionality maximizing a window
-    click: (menuItem, browserWindow, event) => {
-      console.log("max window");
-      if(!browserWindow.isMaximized())
-        browserWindow.maximize();
-      else
-        browserWindow.unmaximize();
-    }
-  }));
-  windowSubmenu.append(new MenuItem({
-    label: "Minimize",
-    accelerator: process.platform === 'darwin' ? 'Cmd+M' : 'Ctrl+M',
-    ///TODO: add fuctionality for minimizing a window
-    click: (menuItem, browserWindow, event) => {
-      console.log("max window");
-      if(!browserWindow.minimize())
-        browserWindow.minimize();
-    }
-  }));
-  contextMenu.append(new MenuItem({
-    label: 'Load',
-    accelerator: process.platform === 'darwin' ? 'Cmd+L' : 'Ctrl+L',
-    click: (menuItem, browserWindow, event) => {
-      dialog.showOpenDialog({
-        properties: ['openFile'],
-        filters: [
-          { name: 'PurRef Gif Scene', extensions: ['purgif'] }
-        ]
-      }).then(result => {
-        console.log(result.canceled)
-        console.log("result.filePaths", result.filePaths)
-        if (!result.canceled) {
-          readAndLoadFilePath(result.filePaths[0])
-        }
-      }).catch(err => {
-        console.log(err)
-      })
-    }
-  }));
-  contextMenu.append(new MenuItem({
-    label: 'Save',
-    accelerator: process.platform === 'darwin' ? 'Cmd+S' : 'Ctrl+S',
-    click: (menuItem, browserWindow, event) => {
-      dialog.showSaveDialog({
+      try {
+        let newState = JSON.parse(data);
+        mainWin.webContents.send('load-scene', newState, filePath);
+      } catch (e) {
+        console.error("Failed to parse .purgif as JSON:", e.message);
+      }
+    });
+  } else {
+    const type = mimeTypes[ext] || 'unknown';
+    // All other file types: treat as direct media (gif, mp4, etc.)
+    mainWin.webContents.send('load-file-direct', { filePath, type });
+  }
+}
+// --- end of custom code 15---
+
+  // --- custom code 14---
+  function openSavedialog() {
+          dialog.showSaveDialog({
         defaultPath: 'scene.purgif',
         filters: [
           { name: 'PurRef Gif Scene', extensions: ['purgif'] }
@@ -244,6 +231,195 @@ app.whenReady().then(() => {
       }).catch(err => {
         console.log(err)
       })
+  }
+
+  function openFiledialog() {
+    dialog.showOpenDialog({
+    properties: ['openFile'],
+    // filters: [
+    //   { name: 'PurRef Gif Scene', extensions: ['purgif'] }
+    // ]
+    filters: [
+      { name: 'All Supported Files', extensions: ['purgif', 'mp4', 'gif', 'png', 'jpg', 'jpeg', 'pdf', 'txt'] },
+      { name: 'PurRef Gif Scene', extensions: ['purgif'] },
+      { name: 'MP4 Videos', extensions: ['mp4'] },
+      { name: 'GIF Files', extensions: ['gif'] },
+      { name: 'PNG Images', extensions: ['png'] },
+      { name: 'JPEG Images', extensions: ['jpg', 'jpeg'] },
+      { name: 'PDF Documents', extensions: ['pdf'] },
+      { name: 'Text Files', extensions: ['txt'] }
+    ]
+  }).then(result => {
+    console.log(result.canceled)
+    console.log("result.filePaths", result.filePaths)
+    if (!result.canceled) {
+      readAndLoadFilePath(result.filePaths[0])
+    }
+  }).catch(err => {
+    console.log(err)
+  })
+  }
+  // --- end of custom code 14 ---
+
+  contextMenu.append(new MenuItem({
+    label: "Recent", type: 'submenu',
+    submenu: recentSubmenu
+  }));
+  populateRecent()
+
+function addClearRecentsItem() {
+  recentSubmenu.append(new MenuItem({
+    label: "Clear Recents",
+    click: () => {
+      store.set('recent', JSON.stringify([]))
+      recentSubmenu.clear()
+      addClearRecentsItem()
+    }
+  }))
+}
+
+addClearRecentsItem()
+
+
+  contextMenu.append(new MenuItem({
+    label: "Window", type: 'submenu',
+    submenu: windowSubmenu
+  }));
+
+  windowSubmenu.append(new MenuItem({
+    label: "Maximize",
+    accelerator: process.platform === 'darwin' ? 'Cmd+F' : 'Ctrl+F',
+    ///TODO: add fuctionality maximizing a window
+    click: (menuItem, browserWindow, event) => {
+      console.log("max window");
+      if (!browserWindow.isMaximized())
+        browserWindow.maximize();
+      else
+        browserWindow.unmaximize();
+    }
+  }));
+  windowSubmenu.append(new MenuItem({
+    label: "Minimize",
+    accelerator: process.platform === 'darwin' ? 'Cmd+M' : 'Ctrl+M',
+    ///TODO: add fuctionality for minimizing a window
+    click: (menuItem, browserWindow, event) => {
+      console.log("max window");
+      if (!browserWindow.minimize())
+        browserWindow.minimize();
+    }
+  }));
+  //--- Custom code ---
+  contextMenu.append(new MenuItem({
+    label: "Video Settings", type: 'submenu',
+    submenu: playerSubmenu
+  }));
+
+  playerSubmenu.append(new MenuItem({
+    id: "toggle-video", label: 'Toggle Player', visible: true,
+    accelerator: 'Space',
+    // click: (menuItem, browserWindow, event) => {
+    click: () => {
+      console.log('Sending toggle/play/pause video to video ID:', selectedVideoId);
+      // mainWin.webContents.send('toggle-video')
+      if (selectedVideoId) {
+        mainWin.webContents.send('toggle-video', {
+          id: selectedVideoId
+        });
+      }
+    }
+  }));
+
+  playerSubmenu.append(new MenuItem({
+    id: "rewind-video", label: 'Rewind 10s', visible: true,
+    accelerator: 'Left',
+    // click: (menuItem, browserWindow, event) => {
+    click: () => {
+      console.log('Sending rewind video to video ID:', selectedVideoId);
+      //mainWin.webContents.send('rewind-video')
+      if (selectedVideoId) {
+        mainWin.webContents.send('rewind-video', {
+          id: selectedVideoId
+        });
+      }
+    }
+  }));
+
+  playerSubmenu.append(new MenuItem({
+    id: "forward-video", label: 'Forward 10s', visible: true,
+    accelerator: 'Right',
+    // click: (menuItem, browserWindow, event) => {
+    click: () => {
+      console.log('Sending foward video to video ID:', selectedVideoId);
+      //mainWin.webContents.send('forward-video')
+      if (selectedVideoId) {
+        mainWin.webContents.send('forward-video', {
+          id: selectedVideoId
+        });
+      }
+    }
+  }));
+
+  playerSubmenu.append(new MenuItem({
+    id: "mute-unmute", label: 'Mute/Unmute', visible: true,
+    accelerator: process.platform === 'darwin' ? 'Cmd+X' : 'Ctrl+X',
+    // click: (menuItem, browserWindow, event) => {
+    click: () => {
+      // console.log('muting/unmuting');
+      // mainWin.webContents.send('mute-unmute')
+      console.log('Sending mute/unmute to video ID:', selectedVideoId);
+      if (selectedVideoId) {
+        mainWin.webContents.send('mute-unmute', {
+          id: selectedVideoId
+        });
+      }
+    }
+  }));
+
+  playerSubmenu.append(new MenuItem({
+    id: "volume-up", label: 'Volume Up', visible: true,
+    accelerator: 'Up',
+    // click: (menuItem, browserWindow, event) => {
+    click: () => {
+      console.log('Sending volume up to video ID:', selectedVideoId);
+      if (selectedVideoId) {
+        mainWin.webContents.send('volume-up', {
+          id: selectedVideoId
+        });
+      }
+    }
+  }));
+
+  playerSubmenu.append(new MenuItem({
+    id: "volume-down", label: 'Volume Down', visible: true,
+    accelerator: 'Down',
+    // click: (menuItem, browserWindow, event) => {
+    click: () => {
+      console.log('Sending volume down to video ID:', selectedVideoId);
+      // mainWin.webContents.send('volume-down')
+      if (selectedVideoId) {
+        mainWin.webContents.send('volume-down', {
+          id: selectedVideoId
+
+        });
+      }
+    }
+  }));
+  // --- end custom code ---
+  contextMenu.append(new MenuItem({
+    label: 'Load',
+    accelerator: process.platform === 'darwin' ? 'Cmd+L' : 'Ctrl+L',
+    click: (menuItem, browserWindow, event) => {
+      openFiledialog();
+
+    }
+  }));
+  contextMenu.append(new MenuItem({
+    label: 'Save',
+    accelerator: process.platform === 'darwin' ? 'Cmd+S' : 'Ctrl+S',
+    click: (menuItem, browserWindow, event) => {
+
+       openSavedialog();
+
     }
   }));
   contextMenu.append(new MenuItem({
@@ -258,6 +434,7 @@ app.whenReady().then(() => {
     accelerator: process.platform === 'darwin' ? 'Cmd+W' : 'Ctrl+W',
     click: (menuItem, browserWindow, event) => {
       browserWindow.close();
+      app.quit();
     }
   }));
 
@@ -265,7 +442,7 @@ app.whenReady().then(() => {
 
   if (process.argv.indexOf("debug") > -1)
     mainWin.webContents.openDevTools()
-  
+
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
       createWindow()
@@ -294,6 +471,63 @@ app.whenReady().then(() => {
     }
     contextMenu.popup(win)
   })
+  //  --- custom code ---
+
+  // ipcMain.on('toggle-video', (event, menuType) => {
+  //   const video = document.querySelector('video')
+  //   if (video) {
+  //     video.paused ? video.play() : video.pause()
+  //   }
+  // });
+
+  // ipcMain.on('rewind-video', (event, menuType) => {
+  //   const video = document.querySelector('video')
+  //   if (video) {
+  //     video.currentTime = Math.max(0, video.currentTime - 10)
+  //   }
+  // });
+
+  // ipcMain.on('forward-video', (event, menuType) => {
+  //   const video = document.querySelector('video')
+  //   if (video) {
+  //     video.currentTime = Math.min(video.duration, video.currentTime + 10)
+  //   }
+  // });
+
+  // ipcMain.on('mute-unmute', (event, menuType) => {
+  //   const video = document.querySelector('video')
+  //   if (video) {
+  //     video.muted = !video.muted
+  //   }
+  // });
+
+  // ipcMain.on('volume-up', (event, menuType) => {
+  //   const video = document.querySelector('video')
+  //   if (video) {
+  //     video.volume = Math.min(1, video.volume + 0.1)
+  //   }
+  // });
+
+  // ipcMain.on('volume-down', (event, menuType) => {
+  //   const video = document.querySelector('video')
+  //   if (video) {
+  //     video.volume = Math.max(0, video.volume - 0.1)
+  //   }
+  // });
+
+
+  // -----------
+
+  ipcMain.on('video-selected', (event, videoId) => {
+    console.log(`Renderer selected video with ID: ${videoId}`);
+
+
+    // Store, manipulate, or respond back to renderer
+    // You can later use this ID to target a specific video
+    selectedVideoId = videoId;
+  });
+  // --- end of custom code ---
+
   ipcMain.on('save-scene', (event, filePath, stateCopy) => {
     console.log('save', filePath, stateCopy)
     let data = JSON.stringify(stateCopy);
@@ -310,6 +544,30 @@ app.whenReady().then(() => {
   ipcMain.on('loaded-state', (event, filePath) => {
     addToRecent(filePath)
   })
+
+  //  --- custom code 12 ---
+  ipcMain.on('trigger-load-dialog', () => {
+    /* open file dialog */
+    openFiledialog();
+
+  });
+
+  ipcMain.on('trigger-save', () => {
+    /* save logic */
+    openSavedialog();
+  });
+
+  ipcMain.on('trigger-new-scene', () => { 
+    /* reset or new scene logic */
+    mainWin.webContents.send('new-scene');
+   });
+
+  ipcMain.on('trigger-close-scene', () => { /* close or cleanup logic */
+    app.quit();
+  });
+  // --- end of custom code 12---
+
+
   ipcMain.on('record-window-size', (event, w, h) => {
     width = mainWin.getSize()[0]
     height = mainWin.getSize()[1]
@@ -327,13 +585,13 @@ app.whenReady().then(() => {
     //win.setSize(width, height)
     //mainWin.setPosition(Math.round(x / 1.25) - Math.round(initPos.x / 1.25), Math.round(y / 1.25) - Math.round(initPos.y / 1.25))
   })
-  let loopToLoad = function loopToLoad(){
-    if(windowIsReady){
+  let loopToLoad = function loopToLoad() {
+    if (windowIsReady) {
       console.log("loadMostRecent")
       //setTimeout(loadMostRecent, 700)
       //loadMostRecent()
     }
-    else{
+    else {
       console.log("not ready")
       setTimeout(loopToLoad, 100)
     }
@@ -342,6 +600,10 @@ app.whenReady().then(() => {
 })
 
 let windowIsReady = false;
+app.on('will-quit', () => {
+    globalShortcut.unregisterAll();
+});
+
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit()
