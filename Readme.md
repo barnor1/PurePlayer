@@ -44,12 +44,7 @@ Windows, Mac, and linux support(need testing on mac and linux; If you're on thes
      - Volume down - Down
 ## Want to add/suggest more shortcuts?
 Use the contribution guide below and check out the issue here: https://github.com/lettucegoblin/AnimRef/issues/9
-# Contributing
-I've added a bunch of [issues](https://github.com/lettucegoblin/AnimRef/issues) that are good starters. 
-If you want to contribute i recommend [this guide](https://www.dataschool.io/how-to-contribute-on-github/) if you're unfamiliar with the process. Feel free to contribute however you'd like!
 
-## List of contributors so far!
-- [Curtrell-Trott](https://github.com/Curtrell-Trott) https://github.com/lettucegoblin/AnimRef/pull/10
 
 ## Building guide
 - if you're looking to contribute prob fork the repo and then clone that locally. use guide above if unfamiliar.
