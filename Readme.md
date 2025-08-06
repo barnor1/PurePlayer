@@ -30,7 +30,7 @@ If you want to contribute i recommend [this guide](https://www.dataschool.io/how
 
 ## Building guide
 - if you're looking to contribute prob fork the repo and then clone that locally. use guide above if unfamiliar.
-- Install nodejs(I use node version 19)
+- Install nodejs(I use node version 20.17.0)
 - in the local repo run `npm install`
 - Running: `npm run start`
 - Packaging: `npm run package` this makes a simple runnable non-installer(.exe for Windows, .dmg for macOS, or .deb for Linux) in out/AnimRef...
