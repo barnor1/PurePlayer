@@ -11,7 +11,6 @@ This is a remake/clone of animRef which is a remake/clone of pureRef, a program 
 ![second preview](github_page/2.gif)
 
 # How to use
-Download from releases here: [Releases](https://github.com/lettucegoblin/AnimRef/releases)
 Windows, Mac, and linux support(need testing on mac and linux; If you're on these platforms please mention how they are in the issues)
 
 ## Shortcuts
